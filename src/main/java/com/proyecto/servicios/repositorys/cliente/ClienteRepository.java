@@ -13,22 +13,50 @@ import java.util.Optional;
 @Repository
 public interface ClienteRepository extends JpaRepository<Cliente, Integer> {
 
-    Optional<Cliente> findByCurp(String curp);
+    Optional<Cliente> findByCurpIgnoreCase(String curp);
 
-    Optional<Cliente> findByRfc(String rfc);
+    Optional<Cliente> findByRfcIgnoreCase(String rfc);
 
-    Optional<Cliente> findByEmail(String email);
+    Optional<Cliente> findByEmailIgnoreCase(String email);
+
+    List<Cliente> findByCurpContainingIgnoreCase(String curp);
+
+    List<Cliente> findByRfcContainingIgnoreCase(String rfc);
+
+    List<Cliente> findByEmailContainingIgnoreCase(String email);
 
     List<Cliente> findByActivoTrue();
 
     List<Cliente> findByFechaCreacionBetween(LocalDateTime inicio, LocalDateTime fin);
 
-    boolean existsByCurp(String curp);
+    boolean existsByCurpIgnoreCase(String curp);
 
-    boolean existsByRfc(String rfc);
+    boolean existsByRfcIgnoreCase(String rfc);
 
-    boolean existsByEmail(String email);
+    boolean existsByEmailIgnoreCase(String email);
 
-    @Query("SELECT c FROM Cliente c JOIN c.cuentas cta WHERE cta.numeroCuenta = :numeroCuenta")
+    @Query("SELECT c FROM Cliente c JOIN c.cuentas cta WHERE UPPER(cta.numeroCuenta) = UPPER(:numeroCuenta)")
     Optional<Cliente> findByNumeroCuenta(@Param("numeroCuenta") String numeroCuenta);
+
+    @Query("SELECT DISTINCT c FROM Cliente c LEFT JOIN c.cuentas cta WHERE " +
+           "(:filtro IS NULL OR :filtro = '' OR " +
+           "LOWER(c.curp) LIKE LOWER(CONCAT('%', :filtro, '%')) OR " +
+           "LOWER(c.rfc) LIKE LOWER(CONCAT('%', :filtro, '%')) OR " +
+           "LOWER(c.email) LIKE LOWER(CONCAT('%', :filtro, '%')) OR " +
+           "LOWER(c.nombre) LIKE LOWER(CONCAT('%', :filtro, '%')) OR " +
+           "LOWER(c.apellidoPaterno) LIKE LOWER(CONCAT('%', :filtro, '%')) OR " +
+           "LOWER(c.apellidoMaterno) LIKE LOWER(CONCAT('%', :filtro, '%')) OR " +
+           "cta.numeroCuenta LIKE CONCAT('%', :filtro, '%'))")
+    List<Cliente> buscarPorFiltroGeneral(@Param("filtro") String filtro);
+
+    @Query("SELECT DISTINCT c FROM Cliente c LEFT JOIN c.cuentas cta WHERE " +
+           "(:curp IS NULL OR LOWER(c.curp) LIKE LOWER(CONCAT('%', :curp, '%'))) AND " +
+           "(:rfc IS NULL OR LOWER(c.rfc) LIKE LOWER(CONCAT('%', :rfc, '%'))) AND " +
+           "(:email IS NULL OR LOWER(c.email) LIKE LOWER(CONCAT('%', :email, '%'))) AND " +
+           "(:numeroCuenta IS NULL OR cta.numeroCuenta LIKE CONCAT('%', :numeroCuenta, '%'))")
+    List<Cliente> buscarPorCriterios(
+            @Param("curp") String curp,
+            @Param("rfc") String rfc,
+            @Param("email") String email,
+            @Param("numeroCuenta") String numeroCuenta);
 }
