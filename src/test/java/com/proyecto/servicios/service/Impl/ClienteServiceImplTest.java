@@ -311,7 +311,7 @@ class ClienteServiceImplTest {
         clienteService.darDeBajaCliente(1);
 
         assertFalse(cliente.getActivo());
-        assertFalse(cliente.getUsuario().getActivo());
+        assertTrue(cliente.getUsuario().getActivo());
         assertEquals("INACTIVA", cuenta.getEstatus());
         verify(clienteRepository).save(cliente);
     }

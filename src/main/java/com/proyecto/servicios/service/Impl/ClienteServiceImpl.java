@@ -259,11 +259,7 @@ public class ClienteServiceImpl implements ClienteService {
 
         cliente.setActivo(false);
 
-        if (cliente.getUsuario() != null) {
-            cliente.getUsuario().setActivo(false);
-            log.info("Usuario asociado al cliente ID: {} desactivado", id);
-        }
-
+        // Las cuentas bancarias se marcan como INACTIVAS para restringir transacciones u operaciones
         if (cliente.getCuentas() != null) {
             cliente.getCuentas().forEach(cuenta -> {
                 cuenta.setEstatus("INACTIVA");
@@ -272,7 +268,7 @@ public class ClienteServiceImpl implements ClienteService {
         }
 
         clienteRepository.save(cliente);
-        log.info("Baja lógica completada para el cliente ID: {}", id);
+        log.info("Baja lógica completada para el cliente ID: {} (usuario conserva acceso de solo consulta)", id);
     }
 
     private void validarMayoriaDeEdad(LocalDate fechaNacimiento) {
