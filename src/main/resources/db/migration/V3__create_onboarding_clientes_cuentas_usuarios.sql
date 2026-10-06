@@ -20,12 +20,14 @@ CREATE TABLE IF NOT EXISTS clientes (
     ingreso_mensual         NUMERIC(15, 2)  NOT NULL,
     activo                  BOOLEAN         NOT NULL DEFAULT TRUE,
     fecha_creacion          TIMESTAMP       NOT NULL DEFAULT NOW(),
-    fecha_actualizacion     TIMESTAMP       NOT NULL DEFAULT NOW()
+    fecha_actualizacion     TIMESTAMP       NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT chk_clientes_curp_longitud CHECK (length(curp) = 18),
+    CONSTRAINT chk_clientes_rfc_longitud CHECK (length(rfc) = 13),
+    CONSTRAINT chk_clientes_telefono_movil_longitud CHECK (length(telefono_movil) = 10),
+    CONSTRAINT chk_clientes_ingreso_positivo CHECK (ingreso_mensual > 0)
 );
 
-CREATE INDEX IF NOT EXISTS idx_clientes_curp ON clientes(curp);
-CREATE INDEX IF NOT EXISTS idx_clientes_rfc ON clientes(rfc);
-CREATE INDEX IF NOT EXISTS idx_clientes_email ON clientes(email);
 CREATE INDEX IF NOT EXISTS idx_clientes_activo ON clientes(activo);
 CREATE INDEX IF NOT EXISTS idx_clientes_fecha_creacion ON clientes(fecha_creacion);
 
@@ -40,10 +42,10 @@ CREATE TABLE IF NOT EXISTS domicilios (
     estado              VARCHAR(100)    NOT NULL,
     codigo_postal       VARCHAR(5)      NOT NULL,
     pais                VARCHAR(50)     NOT NULL,
-    CONSTRAINT fk_domicilios_cliente FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE
-);
 
-CREATE INDEX IF NOT EXISTS idx_domicilios_cliente_id ON domicilios(cliente_id);
+    CONSTRAINT fk_domicilios_cliente FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE,
+    CONSTRAINT chk_domicilios_cp_longitud CHECK (length(codigo_postal) = 5)
+);
 
 CREATE TABLE IF NOT EXISTS cuentas (
     id                  SERIAL PRIMARY KEY,
@@ -53,11 +55,13 @@ CREATE TABLE IF NOT EXISTS cuentas (
     estatus             VARCHAR(20)     NOT NULL DEFAULT 'ACTIVA',
     fecha_creacion      TIMESTAMP       NOT NULL DEFAULT NOW(),
     fecha_actualizacion TIMESTAMP       NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_cuentas_cliente FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE
+
+    CONSTRAINT fk_cuentas_cliente FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE,
+    CONSTRAINT chk_cuentas_saldo_no_negativo CHECK (saldo >= 0),
+    CONSTRAINT chk_cuentas_estatus CHECK (estatus IN ('ACTIVA', 'INACTIVA', 'BLOQUEADA', 'CANCELADA'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_cuentas_cliente_id ON cuentas(cliente_id);
-CREATE INDEX IF NOT EXISTS idx_cuentas_numero_cuenta ON cuentas(numero_cuenta);
 CREATE INDEX IF NOT EXISTS idx_cuentas_estatus ON cuentas(estatus);
 
 CREATE TABLE IF NOT EXISTS usuarios (
@@ -68,8 +72,6 @@ CREATE TABLE IF NOT EXISTS usuarios (
     activo              BOOLEAN         NOT NULL DEFAULT TRUE,
     fecha_creacion      TIMESTAMP       NOT NULL DEFAULT NOW(),
     fecha_actualizacion TIMESTAMP       NOT NULL DEFAULT NOW(),
+
     CONSTRAINT fk_usuarios_cliente FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE
 );
-
-CREATE INDEX IF NOT EXISTS idx_usuarios_correo ON usuarios(correo);
-CREATE INDEX IF NOT EXISTS idx_usuarios_cliente_id ON usuarios(cliente_id);
