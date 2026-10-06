@@ -44,7 +44,8 @@ public class ClienteRegistroRequest {
     private String curp;
 
     @NotBlank(message = "El RFC es obligatorio")
-    @Pattern(regexp = "^[A-ZÑ&]{3,4}\\d{6}[A-Z0-9]{3}$", message = "El RFC debe tener un formato válido de 12 o 13 caracteres")
+    @Pattern(regexp = "^[A-ZÑ&]{4}\\d{6}[A-Z0-9]{3}$", message = "El RFC para persona física debe contener exactamente 13 caracteres con formato válido")
+    @Size(min = 13, max = 13, message = "El RFC para persona física debe tener exactamente 13 caracteres")
     private String rfc;
 
     @NotBlank(message = "El sexo es obligatorio")
