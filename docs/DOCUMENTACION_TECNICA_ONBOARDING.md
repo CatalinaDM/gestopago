@@ -77,7 +77,15 @@ Ubicación: `src/main/resources/db/migration/V3__create_onboarding_clientes_cuen
 
 * **Tipos de datos optimizados**: `NUMERIC(15,2)` para cantidades monetarias precisas evitando errores de punto flotante (`Double/Float`); `VARCHAR` con longitudes acotadas para optimizar almacenamiento en disco e índices; `DATE` para fecha de nacimiento; `TIMESTAMP` para trazabilidad de auditoría.
 * **Integridad referencial y restricciones**: Llaves primarias autoincrementales, restricciones `UNIQUE` en `curp`, `rfc`, `email`, `numero_cuenta`, `cliente_id` (en domicilio y usuario).
-* **Índices de alto rendimiento**: Creados en columnas de búsqueda frecuente (`curp`, `rfc`, `email`, `numero_cuenta`, `estatus`, `fecha_creacion`).
+* **Restricciones CHECK**:
+  * `chk_clientes_curp_longitud`: `length(curp) = 18`
+  * `chk_clientes_rfc_longitud`: `length(rfc) = 13` (estricto para personas físicas)
+  * `chk_clientes_telefono_movil_longitud`: `length(telefono_movil) = 10`
+  * `chk_clientes_ingreso_positivo`: `ingreso_mensual > 0`
+  * `chk_domicilios_cp_longitud`: `length(codigo_postal) = 5`
+  * `chk_cuentas_saldo_no_negativo`: `saldo >= 0`
+  * `chk_cuentas_estatus`: `estatus IN ('ACTIVA', 'INACTIVA', 'BLOQUEADA', 'CANCELADA')`
+* **Higiene de índices**: Índices no redundantes (se aprovecha el índice B-tree implícito de las llaves `UNIQUE` y se mantienen índices para claves foráneas y filtros como `activo`, `fecha_creacion`, `estatus`).
 
 ---
 
@@ -95,7 +103,7 @@ Ubicación: `src/main/resources/db/migration/V3__create_onboarding_clientes_cuen
    - Generación y validación de tokens **JWT** (`JwtUtil`) con expiración y claims (`usuarioId`, `clienteId`).
    - Interceptor de seguridad (`JwtInterceptor`) protegiendo endpoints de cuentas y usuarios.
 5. **Manejo Centralizado de Excepciones (`exception`)**:
-   - `GlobalExceptionHandler` con `@RestControllerAdvice` retornando respuestas consistentes `ApiErrorResponse(codigo, mensaje)` con códigos HTTP adecuados (`400`, `401`, `403`, `404`, `409`).
+   - `GlobalExceptionHandler` con `@RestControllerAdvice` retornando respuestas consistentes `ApiErrorResponse(codigo, mensaje, timestamp, path)` con códigos HTTP adecuados (`400`, `401`, `403`, `404`, `405`, `409`, `500`).
 
 ---
 
@@ -122,13 +130,13 @@ Ubicación: `src/main/resources/db/migration/V3__create_onboarding_clientes_cuen
 * `POST /auth/login`: `{ "correo": "...", "password": "..." }` -> Retorna token JWT y datos de sesión.
 
 ### Clientes
-* `POST /clientes`: Registro completo de persona física, domicilio, creación automática de cuenta bancaria y usuario.
-* `GET /clientes`: Listado total de clientes o con filtros de búsqueda.
+* `POST /clientes`: Registro completo de persona física (RFC 13 caracteres, CURP 18, CP 5, Tel 10), domicilio, creación automática de cuenta bancaria activa y usuario.
+* `GET /clientes`: Listado total de clientes o con filtros de búsqueda combinados.
 * `GET /clientes/activos`: Listado de clientes activos.
 * `GET /clientes/{id}`: Detalle de cliente por ID.
-* `GET /clientes/curp/{curp}`: Consulta por CURP.
-* `GET /clientes/rfc/{rfc}`: Consulta por RFC.
-* `GET /clientes/correo/{correo}`: Consulta por correo.
+* `GET /clientes/curp/{curp}`: Consulta por CURP (ignore case).
+* `GET /clientes/rfc/{rfc}`: Consulta por RFC (ignore case).
+* `GET /clientes/correo/{correo}`: Consulta por correo (ignore case).
 * `GET /clientes/cuenta/{numeroCuenta}`: Consulta por número de cuenta bancaria.
 * `GET /clientes/rango-fechas?fechaInicio=YYYY-MM-DD&fechaFin=YYYY-MM-DD`: Consulta por rango de fechas de alta.
 * `GET /clientes/buscar?filtro=texto`: Búsqueda flexible en nombres, CURP, RFC, email o cuenta.
@@ -144,11 +152,14 @@ Ubicación: `src/main/resources/db/migration/V3__create_onboarding_clientes_cuen
 * `GET /usuarios/{id}`: Consulta información y estatus del usuario.
 * `PUT /usuarios/{id}/password`: Actualización de contraseña con validación de contraseña actual y BCrypt.
 
+### Catálogo
+* `GET /catalogo/productos`: Consulta el catálogo de productos retornando DTO desacoplado (`GestoPagoProductoResponse`).
+
 ---
 
 ## 7. Evidencia de Pruebas Unitarias
 Se cuenta con pruebas unitarias exhaustivas con JUnit 5 y Mockito que validan:
-* Registro exitoso y validaciones de mayoría de edad, CURP, RFC, email y saldo.
+* Registro exitoso y validaciones de mayoría de edad, CURP, RFC (13 caracteres), email y saldo.
 * Consultas por ID, CURP, RFC, email, cuenta, rango de fechas y filtros flexibles.
 * Actualización con inmutabilidad y baja lógica.
 * Login exitoso, usuario inactivo, credenciales inválidas y cambio de contraseña.
