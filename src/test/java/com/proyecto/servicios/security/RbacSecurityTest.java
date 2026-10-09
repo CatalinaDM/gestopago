@@ -134,6 +134,15 @@ class RbacSecurityTest {
         }
 
         @Test
+        @DisplayName("Verificar compatibilidad de hash BCrypt para admin")
+        void verificarHashBcrypt() {
+            org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder encoder = 
+                    new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
+            String hash = "$2a$10$0p8g6E/btl48HAmaHdI9/OF8CIJkujmfD.6caW6X.3YrPbZSWEiEW";
+            org.junit.jupiter.api.Assertions.assertTrue(encoder.matches("Admin123!", hash));
+        }
+
+        @Test
         @DisplayName("Usuario no puede cambiar la contraseña de otro usuario (IDOR) -> 403 Forbidden")
         void usuarioNoPuedeCambiarPasswordDeOtro() {
             ActualizarPasswordRequest req = new ActualizarPasswordRequest("PassActual1!", "PassNuevo1!");

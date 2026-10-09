@@ -136,23 +136,29 @@ Al dar de baja a un cliente mediante `DELETE /clientes/{id}`:
 | :--- | :--- | :--- | :--- |
 | `POST` | `/auth/login` | Público | Autentica con correo y contraseña. Devuelve token JWT, rol y datos de sesión. |
 
-#### Ejemplo Request `/auth/login`:
+#### Credenciales Predeterminadas para Pruebas:
+| Rol | Correo / Usuario | Contraseña | Notas |
+| :--- | :--- | :--- | :--- |
+| **Administrador** | `admin@banco.com` | `Admin123!` | Creado por migración Flyway `V4`. Acceso total a listados, filtros, métricas y desbloqueo. |
+| **Cliente (Ejemplo)** | `juan.perez@example.com` | `Password123!` | Se crea al registrarse con `POST /clientes`. Acceso exclusivo a `/clientes/me`, `/cuentas/me` y sus cuentas. |
+
+#### Ejemplo Request `/auth/login` (Login como Administrador):
 ```json
 {
-  "correo": "juan.perez@example.com",
-  "password": "Password123!"
+  "correo": "admin@banco.com",
+  "password": "Admin123!"
 }
 ```
 
-#### Ejemplo Response 200 OK:
+#### Ejemplo Response 200 OK (Administrador):
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiJ9...",
   "tokenType": "Bearer",
   "usuarioId": 1,
-  "clienteId": 10,
-  "correo": "juan.perez@example.com",
-  "rol": 2
+  "clienteId": null,
+  "correo": "admin@banco.com",
+  "rol": 1
 }
 ```
 
