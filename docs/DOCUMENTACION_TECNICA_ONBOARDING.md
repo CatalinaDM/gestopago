@@ -161,39 +161,39 @@ Al dar de baja a un cliente mediante `DELETE /clientes/{id}`:
 ### 5.2. Clientes (`/clientes`)
 | Método | Endpoint | Acceso Requerido | Descripción |
 | :--- | :--- | :--- | :--- |
-| `POST` | `/clientes` | Público | **Onboarding completo**: Registra cliente, domicilio, genera cuenta bancaria (10 dígitos) con saldo inicial `$0.00` y usuario (`rol = 2`). |
-| `GET` | `/clientes/me` | Cliente / Admin | Obtiene el perfil propio del cliente asociado al token JWT autenticado. |
-| `GET` | `/clientes` | **Solo Admin (Rol 1)** | Lista todos los clientes o filtra por `filtro`, `curp`, `rfc`, `email`, `cuenta`. |
-| `GET` | `/clientes/paginados` | **Solo Admin (Rol 1)** | Consulta paginada (`page`, `size`, `sort`) para paneles administrativos. |
-| `GET` | `/clientes/activos` | **Solo Admin (Rol 1)** | Lista todos los clientes con `activo = true`. |
-| `GET` | `/clientes/{id}` | **Solo Admin (Rol 1)** | Obtiene detalle de cualquier cliente por su ID. |
-| `GET` | `/clientes/curp/{curp}` | **Solo Admin (Rol 1)** | Búsqueda parcial de clientes por CURP. |
-| `GET` | `/clientes/rfc/{rfc}` | **Solo Admin (Rol 1)** | Búsqueda parcial de clientes por RFC. |
-| `GET` | `/clientes/correo/{correo}` | **Solo Admin (Rol 1)** | Búsqueda parcial de clientes por correo electrónico. |
-| `GET` | `/clientes/cuenta/{numeroCuenta}` | **Solo Admin (Rol 1)** | Obtiene el cliente titular del número de cuenta. |
-| `GET` | `/clientes/rango-fechas` | **Solo Admin (Rol 1)** | Filtra clientes dados de alta en un rango de fechas (`YYYY-MM-DD`). |
-| `GET` | `/clientes/buscar?filtro=texto` | **Solo Admin (Rol 1)** | Búsqueda abierta en nombres, CURP, RFC, email o cuenta. |
-| `PUT` | `/clientes/{id}` | **Admin o Propio Cliente** | Actualiza datos personales y de domicilio (Valida IDOR: Rol 2 solo su propio ID). |
-| `DELETE` | `/clientes/{id}` | **Solo Admin (Rol 1)** | **Baja lógica en cascada** (desactiva cliente, cuentas y usuario). |
+| `POST` | `/clientes` | Público | **Onboarding completo**: Registra cliente, domicilio, genera cuenta bancaria (10 dígitos) con saldo inicial `$0.00` y usuario. |
+| `GET` | `/clientes/me` | Cliente / Administrador | Obtiene el perfil propio del cliente asociado al token JWT autenticado. |
+| `GET` | `/clientes` | **Solo Administrador** | Lista todos los clientes o filtra por `filtro`, `curp`, `rfc`, `email`, `cuenta`. |
+| `GET` | `/clientes/paginados` | **Solo Administrador** | Consulta paginada (`page`, `size`, `sort`) para paneles administrativos. |
+| `GET` | `/clientes/activos` | **Solo Administrador** | Lista todos los clientes con `activo = true`. |
+| `GET` | `/clientes/{id}` | **Solo Administrador** | Obtiene detalle de cualquier cliente por su ID. |
+| `GET` | `/clientes/curp/{curp}` | **Solo Administrador** | Búsqueda parcial de clientes por CURP. |
+| `GET` | `/clientes/rfc/{rfc}` | **Solo Administrador** | Búsqueda parcial de clientes por RFC. |
+| `GET` | `/clientes/correo/{correo}` | **Solo Administrador** | Búsqueda parcial de clientes por correo electrónico. |
+| `GET` | `/clientes/cuenta/{numeroCuenta}` | **Solo Administrador** | Obtiene el cliente titular del número de cuenta. |
+| `GET` | `/clientes/rango-fechas` | **Solo Administrador** | Filtra clientes dados de alta en un rango de fechas (`YYYY-MM-DD`). |
+| `GET` | `/clientes/buscar?filtro=texto` | **Solo Administrador** | Búsqueda abierta en nombres, CURP, RFC, email o cuenta. |
+| `PUT` | `/clientes/{id}` | **Administrador o Propio Cliente** | Actualiza datos personales y de domicilio (Valida IDOR: el cliente solo puede modificar su propio ID). |
+| `DELETE` | `/clientes/{id}` | **Solo Administrador** | **Baja lógica en cascada** (desactiva cliente, cuentas y usuario). |
 
 ---
 
 ### 5.3. Cuentas (`/cuentas`)
 | Método | Endpoint | Acceso Requerido | Descripción |
 | :--- | :--- | :--- | :--- |
-| `GET` | `/cuentas/me` | Cliente / Admin | Obtiene el listado de cuentas activas pertenecientes al cliente autenticado. |
-| `GET` | `/cuentas/{numeroCuenta}` | **Admin o Dueño de Cuenta** | Consulta detalle de la cuenta (Valida pertenencia para Rol 2, IDOR protegido). |
-| `GET` | `/cuentas/{numeroCuenta}/saldo` | **Admin o Dueño de Cuenta** | Consulta el saldo actual de la cuenta (Valida pertenencia para Rol 2, IDOR protegido). |
-| `GET` | `/cuentas/activas` | **Solo Admin (Rol 1)** | Lista global de todas las cuentas bancarias activas en el sistema. |
+| `GET` | `/cuentas/me` | Cliente / Administrador | Obtiene el listado de cuentas activas pertenecientes al cliente autenticado. |
+| `GET` | `/cuentas/{numeroCuenta}` | **Administrador o Dueño de Cuenta** | Consulta detalle de la cuenta (Valida pertenencia para el cliente, IDOR protegido). |
+| `GET` | `/cuentas/{numeroCuenta}/saldo` | **Administrador o Dueño de Cuenta** | Consulta el saldo actual de la cuenta (Valida pertenencia para el cliente, IDOR protegido). |
+| `GET` | `/cuentas/activas` | **Solo Administrador** | Lista global de todas las cuentas bancarias activas en el sistema. |
 
 ---
 
 ### 5.4. Usuarios (`/usuarios`)
 | Método | Endpoint | Acceso Requerido | Descripción |
 | :--- | :--- | :--- | :--- |
-| `GET` | `/usuarios/{id}` | **Solo Admin (Rol 1)** | Obtiene la información técnica del usuario (ID, correo, rol, intentos, activo). |
+| `GET` | `/usuarios/{id}` | **Solo Administrador** | Obtiene la información técnica del usuario (ID, correo, rol, intentos, activo). |
 | `PUT` | `/usuarios/{id}/password` | **Exclusivo Propio Usuario** | Cambia la contraseña (requiere `passwordActual` y `passwordNuevo`). **Protección IDOR estricta**: solo el usuario autenticado puede cambiar su propia clave. |
-| `PATCH` | `/usuarios/{id}/desbloquear` | **Solo Admin (Rol 1)** | Desbloquea un usuario tras 3 intentos fallidos (`activo = true`, `intentos = 0`). |
+| `PATCH` | `/usuarios/{id}/desbloquear` | **Solo Administrador** | Desbloquea un usuario tras 3 intentos fallidos (`activo = true`, `intentos = 0`). |
 
 ---
 

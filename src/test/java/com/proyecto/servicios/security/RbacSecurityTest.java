@@ -47,43 +47,43 @@ class RbacSecurityTest {
     class ClientesSecurity {
 
         @Test
-        @DisplayName("Rol 2 (Cliente) no puede listar todos los clientes -> 403 Forbidden")
-        void rol2NoPuedeListarClientes() {
+        @DisplayName("Cliente no puede listar todos los clientes -> 403 Forbidden")
+        void clienteNoPuedeListarClientes() {
             assertThrows(AccesoDenegadoException.class, () ->
                     clienteController.obtenerClientes(2, null, null, null, null, null));
         }
 
         @Test
-        @DisplayName("Rol 2 (Cliente) no puede listar clientes paginados -> 403 Forbidden")
-        void rol2NoPuedeListarPaginados() {
+        @DisplayName("Cliente no puede listar clientes paginados -> 403 Forbidden")
+        void clienteNoPuedeListarPaginados() {
             assertThrows(AccesoDenegadoException.class, () ->
                     clienteController.obtenerClientesPaginados(2, null, false, Pageable.unpaged()));
         }
 
         @Test
-        @DisplayName("Rol 2 (Cliente) no puede consultar otro cliente por ID -> 403 Forbidden")
-        void rol2NoPuedeConsultarPorId() {
+        @DisplayName("Cliente no puede consultar otro cliente por ID -> 403 Forbidden")
+        void clienteNoPuedeConsultarPorId() {
             assertThrows(AccesoDenegadoException.class, () ->
                     clienteController.obtenerPorId(99, 2));
         }
 
         @Test
-        @DisplayName("Rol 2 (Cliente) no puede dar de baja clientes -> 403 Forbidden")
-        void rol2NoPuedeDarDeBaja() {
+        @DisplayName("Cliente no puede dar de baja clientes -> 403 Forbidden")
+        void clienteNoPuedeDarDeBaja() {
             assertThrows(AccesoDenegadoException.class, () ->
                     clienteController.darDeBajaCliente(99, 2));
         }
 
         @Test
-        @DisplayName("Rol 1 (Admin) sí puede listar todos los clientes")
-        void rol1PuedeListarClientes() {
+        @DisplayName("Administrador sí puede listar todos los clientes")
+        void adminPuedeListarClientes() {
             clienteController.obtenerClientes(1, null, null, null, null, null);
             verify(clienteService).obtenerTodos();
         }
 
         @Test
-        @DisplayName("Rol 2 (Cliente) puede consultar su propio perfil en /clientes/me")
-        void rol2PuedeConsultarSuPerfil() {
+        @DisplayName("Cliente puede consultar su propio perfil en /clientes/me")
+        void clientePuedeConsultarSuPerfil() {
             clienteController.obtenerMiPerfil(5);
             verify(clienteService).obtenerPerfil(5);
         }
@@ -94,22 +94,22 @@ class RbacSecurityTest {
     class CuentasSecurity {
 
         @Test
-        @DisplayName("Rol 2 (Cliente) no puede listar todas las cuentas activas -> 403 Forbidden")
-        void rol2NoPuedeListarCuentasActivas() {
+        @DisplayName("Cliente no puede listar todas las cuentas activas -> 403 Forbidden")
+        void clienteNoPuedeListarCuentasActivas() {
             assertThrows(AccesoDenegadoException.class, () ->
                     cuentaController.obtenerCuentasActivas(2));
         }
 
         @Test
-        @DisplayName("Rol 1 (Admin) sí puede listar todas las cuentas activas")
-        void rol1PuedeListarCuentasActivas() {
+        @DisplayName("Administrador sí puede listar todas las cuentas activas")
+        void adminPuedeListarCuentasActivas() {
             cuentaController.obtenerCuentasActivas(1);
             verify(cuentaService).obtenerCuentasActivas();
         }
 
         @Test
-        @DisplayName("Rol 2 (Cliente) puede consultar sus propias cuentas en /cuentas/me")
-        void rol2PuedeConsultarSusCuentas() {
+        @DisplayName("Cliente puede consultar sus propias cuentas en /cuentas/me")
+        void clientePuedeConsultarSusCuentas() {
             cuentaController.obtenerMisCuentas(5);
             verify(cuentaService).obtenerCuentasPorCliente(5);
         }
@@ -120,15 +120,15 @@ class RbacSecurityTest {
     class UsuariosSecurity {
 
         @Test
-        @DisplayName("Rol 2 (Cliente) no puede consultar detalles de usuarios por ID -> 403 Forbidden")
-        void rol2NoPuedeConsultarUsuarioPorId() {
+        @DisplayName("Cliente no puede consultar detalles de usuarios por ID -> 403 Forbidden")
+        void clienteNoPuedeConsultarUsuarioPorId() {
             assertThrows(AccesoDenegadoException.class, () ->
                     usuarioController.obtenerPorId(10, 2));
         }
 
         @Test
-        @DisplayName("Rol 2 (Cliente) no puede desbloquear usuarios -> 403 Forbidden")
-        void rol2NoPuedeDesbloquearUsuario() {
+        @DisplayName("Cliente no puede desbloquear usuarios -> 403 Forbidden")
+        void clienteNoPuedeDesbloquearUsuario() {
             assertThrows(AccesoDenegadoException.class, () ->
                     usuarioController.desbloquearUsuario(10, 2));
         }

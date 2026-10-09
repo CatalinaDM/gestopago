@@ -179,7 +179,7 @@ public class ClienteController {
     private void validarAdmin(Integer rol) {
         if (rol == null || rol != 1) {
             throw new com.proyecto.servicios.exception.AccesoDenegadoException(
-                    "AUTH-004", "Acceso denegado: Se requieren permisos de Administrador (Rol 1) para esta operación");
+                    "AUTH-004", "Acceso denegado: Se requieren permisos de Administrador para esta operación");
         }
     }
 }
