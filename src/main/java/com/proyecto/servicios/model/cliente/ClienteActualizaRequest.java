@@ -57,10 +57,10 @@ public class ClienteActualizaRequest {
     private String email;
 
     @NotBlank(message = "El teléfono móvil es obligatorio")
-    @Pattern(regexp = "^\\d{10}$", message = "El teléfono móvil debe contener exactamente 10 dígitos numéricos")
+    @Pattern(regexp = "^\\d{10}$", message = "El teléfono móvil es inválido: solo debe contener exactamente 10 dígitos numéricos (sin letras, espacios ni caracteres especiales)")
     private String telefonoMovil;
 
-    @Pattern(regexp = "^(\\d{10})?$", message = "El teléfono alternativo debe contener exactamente 10 dígitos numéricos")
+    @Pattern(regexp = "^(\\d{10})?$", message = "El teléfono alternativo es inválido: solo debe contener exactamente 10 dígitos numéricos (sin letras, espacios ni caracteres especiales)")
     private String telefonoAlternativo;
 
     @NotBlank(message = "La ocupación es obligatoria")

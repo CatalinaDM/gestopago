@@ -19,7 +19,13 @@ public class UsuarioController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UsuarioResponse> obtenerPorId(@PathVariable Integer id) {
+    public ResponseEntity<UsuarioResponse> obtenerPorId(
+            @PathVariable Integer id,
+            @RequestAttribute(value = "rol", required = false) Integer rol) {
+        if (rol == null || rol != 1) {
+            throw new com.proyecto.servicios.exception.AccesoDenegadoException(
+                    "AUTH-004", "Acceso denegado: Solo los administradores pueden consultar información de usuarios");
+        }
         return ResponseEntity.ok(usuarioService.obtenerPorId(id));
     }
 
@@ -27,13 +33,12 @@ public class UsuarioController {
     public ResponseEntity<GenericResponse> actualizarPassword(
             @PathVariable Integer id,
             @RequestAttribute(value = "usuarioId", required = false) Integer tokenUsuarioId,
-            @RequestAttribute(value = "rol", required = false) Integer rol,
             @Valid @RequestBody ActualizarPasswordRequest request) {
 
-        // Validar que el usuario solo pueda modificar su propia contraseña salvo que sea ADMIN (rol 1)
-        if (tokenUsuarioId != null && !tokenUsuarioId.equals(id) && (rol == null || rol != 1)) {
-            throw new com.proyecto.servicios.exception.ValidacionException(
-                    "AUTH-007", "No tiene permisos para modificar la contraseña de otro usuario");
+        // Solo el propio usuario autenticado puede cambiar su contraseña (prevención IDOR estricta)
+        if (tokenUsuarioId == null || !tokenUsuarioId.equals(id)) {
+            throw new com.proyecto.servicios.exception.AccesoDenegadoException(
+                    "AUTH-007", "Acceso denegado: Solo el propio usuario autenticado puede modificar su contraseña");
         }
 
         usuarioService.actualizarPassword(id, request);
@@ -49,8 +54,8 @@ public class UsuarioController {
             @RequestAttribute(value = "rol", required = false) Integer rol) {
 
         if (rol == null || rol != 1) {
-            throw new com.proyecto.servicios.exception.ValidacionException(
-                    "AUTH-008", "Solo un administrador puede desbloquear usuarios");
+            throw new com.proyecto.servicios.exception.AccesoDenegadoException(
+                    "AUTH-008", "Acceso denegado: Solo un administrador puede desbloquear usuarios");
         }
 
         usuarioService.desbloquearUsuario(id);

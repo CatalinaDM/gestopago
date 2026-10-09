@@ -9,7 +9,13 @@ public interface CuentaService {
 
     CuentaResponse obtenerPorNumeroCuenta(String numeroCuenta);
 
+    CuentaResponse obtenerPorNumeroCuenta(String numeroCuenta, Integer rol, Integer tokenClienteId);
+
     SaldoCuentaResponse obtenerSaldo(String numeroCuenta);
 
+    SaldoCuentaResponse obtenerSaldo(String numeroCuenta, Integer rol, Integer tokenClienteId);
+
     List<CuentaResponse> obtenerCuentasActivas();
+
+    List<CuentaResponse> obtenerCuentasPorCliente(Integer clienteId);
 }
