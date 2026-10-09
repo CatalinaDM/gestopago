@@ -8,7 +8,7 @@ import org.mapstruct.*;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring", uses = {DomicilioMapper.class, CuentaMapper.class})
+@Mapper(componentModel = "spring", uses = {DomicilioMapper.class, CuentaMapper.class, StringSanitizer.class})
 public interface ClienteMapper {
 
     @Mapping(target = "id", ignore = true)
@@ -18,6 +18,20 @@ public interface ClienteMapper {
     @Mapping(target = "domicilio", ignore = true)
     @Mapping(target = "cuentas", ignore = true)
     @Mapping(target = "usuario", ignore = true)
+    @Mapping(target = "nombre", qualifiedByName = "trim")
+    @Mapping(target = "segundoNombre", qualifiedByName = "trim")
+    @Mapping(target = "apellidoPaterno", qualifiedByName = "trim")
+    @Mapping(target = "apellidoMaterno", qualifiedByName = "trim")
+    @Mapping(target = "curp", qualifiedByName = "trimUpper")
+    @Mapping(target = "rfc", qualifiedByName = "trimUpper")
+    @Mapping(target = "email", qualifiedByName = "trimLower")
+    @Mapping(target = "sexo", qualifiedByName = "trimUpper")
+    @Mapping(target = "nacionalidad", qualifiedByName = "trim")
+    @Mapping(target = "estadoCivil", qualifiedByName = "trim")
+    @Mapping(target = "telefonoMovil", qualifiedByName = "trim")
+    @Mapping(target = "telefonoAlternativo", qualifiedByName = "trim")
+    @Mapping(target = "ocupacion", qualifiedByName = "trim")
+    @Mapping(target = "empresa", qualifiedByName = "trim")
     Cliente toEntity(ClienteRegistroRequest request);
 
     @Mapping(target = "nombreCompleto", expression = "java(construirNombreCompleto(entity))")
@@ -35,6 +49,18 @@ public interface ClienteMapper {
     @Mapping(target = "domicilio", ignore = true)
     @Mapping(target = "cuentas", ignore = true)
     @Mapping(target = "usuario", ignore = true)
+    @Mapping(target = "nombre", qualifiedByName = "trim")
+    @Mapping(target = "segundoNombre", qualifiedByName = "trim")
+    @Mapping(target = "apellidoPaterno", qualifiedByName = "trim")
+    @Mapping(target = "apellidoMaterno", qualifiedByName = "trim")
+    @Mapping(target = "email", qualifiedByName = "trimLower")
+    @Mapping(target = "sexo", qualifiedByName = "trimUpper")
+    @Mapping(target = "nacionalidad", qualifiedByName = "trim")
+    @Mapping(target = "estadoCivil", qualifiedByName = "trim")
+    @Mapping(target = "telefonoMovil", qualifiedByName = "trim")
+    @Mapping(target = "telefonoAlternativo", qualifiedByName = "trim")
+    @Mapping(target = "ocupacion", qualifiedByName = "trim")
+    @Mapping(target = "empresa", qualifiedByName = "trim")
     void updateEntity(ClienteActualizaRequest request, @MappingTarget Cliente entity);
 
     default String construirNombreCompleto(Cliente cliente) {

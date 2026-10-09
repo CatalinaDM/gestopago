@@ -17,4 +17,5 @@ public class LoginResponse {
     private Integer usuarioId;
     private Integer clienteId;
     private String correo;
+    private Integer rol;
 }

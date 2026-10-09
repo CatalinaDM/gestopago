@@ -57,11 +57,14 @@ class ClienteServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        com.proyecto.servicios.mapper.StringSanitizer stringSanitizer = new com.proyecto.servicios.mapper.StringSanitizer();
         DomicilioMapper domicilioMapper = Mappers.getMapper(DomicilioMapper.class);
         CuentaMapper cuentaMapper = Mappers.getMapper(CuentaMapper.class);
         ClienteMapper clienteMapper = Mappers.getMapper(ClienteMapper.class);
+        org.springframework.test.util.ReflectionTestUtils.setField(domicilioMapper, "stringSanitizer", stringSanitizer);
         org.springframework.test.util.ReflectionTestUtils.setField(clienteMapper, "domicilioMapper", domicilioMapper);
         org.springframework.test.util.ReflectionTestUtils.setField(clienteMapper, "cuentaMapper", cuentaMapper);
+        org.springframework.test.util.ReflectionTestUtils.setField(clienteMapper, "stringSanitizer", stringSanitizer);
 
         clienteService = new ClienteServiceImpl(
                 clienteRepository,
@@ -158,19 +161,6 @@ class ClienteServiceImplTest {
     }
 
     @Test
-    void registrarCliente_ErrorSaldoNegativo() {
-        ClienteRegistroRequest request = crearRequestValido();
-        request.setSaldoInicial(new BigDecimal("-10.00"));
-
-        ValidacionException exception = assertThrows(
-                ValidacionException.class,
-                () -> clienteService.registrarCliente(request)
-        );
-
-        assertEquals("VALIDACION-003", exception.getCodigo());
-    }
-
-    @Test
     void obtenerPorId_Exitoso() {
         Cliente cliente = crearClienteEntidad();
         when(clienteRepository.findById(1)).thenReturn(Optional.of(cliente));
@@ -192,34 +182,37 @@ class ClienteServiceImplTest {
     @Test
     void obtenerPorCurp_Exitoso() {
         Cliente cliente = crearClienteEntidad();
-        when(clienteRepository.findByCurpIgnoreCase("ABCD900101HDFRRN01")).thenReturn(Optional.of(cliente));
+        when(clienteRepository.findByCurpContainingIgnoreCase("ABCD900101HDFRRN01")).thenReturn(List.of(cliente));
 
-        ClienteResponse response = clienteService.obtenerPorCurp("ABCD900101HDFRRN01");
+        List<ClienteResponse> response = clienteService.obtenerPorCurp("ABCD900101HDFRRN01");
 
         assertNotNull(response);
-        assertEquals("ABCD900101HDFRRN01", response.getCurp());
+        assertEquals(1, response.size());
+        assertEquals("ABCD900101HDFRRN01", response.get(0).getCurp());
     }
 
     @Test
     void obtenerPorRfc_Exitoso() {
         Cliente cliente = crearClienteEntidad();
-        when(clienteRepository.findByRfcIgnoreCase("ABCD900101AB1")).thenReturn(Optional.of(cliente));
+        when(clienteRepository.findByRfcContainingIgnoreCase("ABCD900101AB1")).thenReturn(List.of(cliente));
 
-        ClienteResponse response = clienteService.obtenerPorRfc("ABCD900101AB1");
+        List<ClienteResponse> response = clienteService.obtenerPorRfc("ABCD900101AB1");
 
         assertNotNull(response);
-        assertEquals("ABCD900101AB1", response.getRfc());
+        assertEquals(1, response.size());
+        assertEquals("ABCD900101AB1", response.get(0).getRfc());
     }
 
     @Test
     void obtenerPorCorreo_Exitoso() {
         Cliente cliente = crearClienteEntidad();
-        when(clienteRepository.findByEmailIgnoreCase("juan@example.com")).thenReturn(Optional.of(cliente));
+        when(clienteRepository.findByEmailContainingIgnoreCase("juan@example.com")).thenReturn(List.of(cliente));
 
-        ClienteResponse response = clienteService.obtenerPorCorreo("juan@example.com");
+        List<ClienteResponse> response = clienteService.obtenerPorCorreo("juan@example.com");
 
         assertNotNull(response);
-        assertEquals("juan@example.com", response.getEmail());
+        assertEquals(1, response.size());
+        assertEquals("juan@example.com", response.get(0).getEmail());
     }
 
     @Test
@@ -303,7 +296,7 @@ class ClienteServiceImplTest {
 
         Cuenta cuenta = new Cuenta();
         cuenta.setNumeroCuenta("1234567890");
-        cuenta.setEstatus("ACTIVA");
+        cuenta.setActivo(true);
         cliente.getCuentas().add(cuenta);
 
         when(clienteRepository.findById(1)).thenReturn(Optional.of(cliente));
@@ -311,8 +304,8 @@ class ClienteServiceImplTest {
         clienteService.darDeBajaCliente(1);
 
         assertFalse(cliente.getActivo());
-        assertTrue(cliente.getUsuario().getActivo());
-        assertEquals("INACTIVA", cuenta.getEstatus());
+        assertFalse(cliente.getUsuario().getActivo());
+        assertFalse(cuenta.getActivo());
         verify(clienteRepository).save(cliente);
     }
 
@@ -334,7 +327,6 @@ class ClienteServiceImplTest {
                 .empresa("Software SA")
                 .ingresoMensual(new BigDecimal("25000.00"))
                 .password("Password123!")
-                .saldoInicial(new BigDecimal("1000.00"))
                 .domicilio(crearDomicilioDTO())
                 .build();
     }

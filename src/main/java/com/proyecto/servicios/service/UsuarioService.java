@@ -8,4 +8,6 @@ public interface UsuarioService {
     UsuarioResponse obtenerPorId(Integer id);
 
     void actualizarPassword(Integer id, ActualizarPasswordRequest request);
+
+    void desbloquearUsuario(Integer id);
 }

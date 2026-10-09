@@ -18,6 +18,6 @@ public class CuentaResponse {
     private Integer clienteId;
     private String numeroCuenta;
     private BigDecimal saldo;
-    private String estatus;
+    private Boolean activo;
     private LocalDateTime fechaCreacion;
 }

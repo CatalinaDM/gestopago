@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Getter
 @Builder
@@ -17,6 +18,7 @@ public class ApiErrorResponse {
 
     private String codigo;
     private String mensaje;
+    private Map<String, String> detalles;
     private LocalDateTime timestamp;
     private String path;
 
@@ -29,6 +31,14 @@ public class ApiErrorResponse {
     public ApiErrorResponse(String codigo, String mensaje, String path) {
         this.codigo = codigo;
         this.mensaje = mensaje;
+        this.timestamp = LocalDateTime.now();
+        this.path = path;
+    }
+
+    public ApiErrorResponse(String codigo, String mensaje, Map<String, String> detalles, String path) {
+        this.codigo = codigo;
+        this.mensaje = mensaje;
+        this.detalles = detalles;
         this.timestamp = LocalDateTime.now();
         this.path = path;
     }

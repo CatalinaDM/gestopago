@@ -54,7 +54,7 @@ class AuthServiceImplTest {
 
         when(usuarioRepository.findByCorreo("test@example.com")).thenReturn(Optional.of(usuario));
         when(passwordEncoder.matches("Password123!", "hashed_pass")).thenReturn(true);
-        when(jwtUtil.generarToken("test@example.com", 1, 10)).thenReturn("jwt-token-sample");
+        when(jwtUtil.generarToken("test@example.com", 1, 10, 2)).thenReturn("jwt-token-sample");
 
         LoginResponse response = authService.login(request);
 
@@ -91,10 +91,30 @@ class AuthServiceImplTest {
         usuario.setCorreo("test@example.com");
         usuario.setPassword("hashed_pass");
         usuario.setActivo(true);
+        usuario.setIntentosFallidos(0);
 
         when(usuarioRepository.findByCorreo("test@example.com")).thenReturn(Optional.of(usuario));
         when(passwordEncoder.matches("WrongPassword", "hashed_pass")).thenReturn(false);
 
         assertThrows(CredencialesInvalidasException.class, () -> authService.login(request));
+        assertEquals(1, usuario.getIntentosFallidos());
+    }
+
+    @Test
+    void login_TercerIntentoFallido_BloqueaUsuario() {
+        LoginRequest request = new LoginRequest("test@example.com", "WrongPassword");
+        Usuario usuario = new Usuario();
+        usuario.setCorreo("test@example.com");
+        usuario.setPassword("hashed_pass");
+        usuario.setActivo(true);
+        usuario.setIntentosFallidos(2);
+
+        when(usuarioRepository.findByCorreo("test@example.com")).thenReturn(Optional.of(usuario));
+        when(passwordEncoder.matches("WrongPassword", "hashed_pass")).thenReturn(false);
+
+        UsuarioInactivoException ex = assertThrows(UsuarioInactivoException.class, () -> authService.login(request));
+        assertFalse(usuario.getActivo());
+        assertEquals(3, usuario.getIntentosFallidos());
+        assertTrue(ex.getMessage().contains("Acceso bloqueado"));
     }
 }

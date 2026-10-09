@@ -16,6 +16,8 @@ public class UsuarioResponse {
     private Integer id;
     private Integer clienteId;
     private String correo;
+    private Integer rol;
+    private Integer intentosFallidos;
     private Boolean activo;
     private LocalDateTime fechaCreacion;
 }

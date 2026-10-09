@@ -28,10 +28,11 @@ public class JwtUtil {
         this.expirationMs = expirationMs;
     }
 
-    public String generarToken(String correo, Integer usuarioId, Integer clienteId) {
+    public String generarToken(String correo, Integer usuarioId, Integer clienteId, Integer rol) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("usuarioId", usuarioId);
         claims.put("clienteId", clienteId);
+        claims.put("rol", rol);
 
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expirationMs);
@@ -78,5 +79,10 @@ public class JwtUtil {
     public Integer obtenerClienteId(String token) {
         Object id = obtenerClaims(token).get("clienteId");
         return id != null ? ((Number) id).intValue() : null;
+    }
+
+    public Integer obtenerRol(String token) {
+        Object rol = obtenerClaims(token).get("rol");
+        return rol != null ? ((Number) rol).intValue() : 2;
     }
 }

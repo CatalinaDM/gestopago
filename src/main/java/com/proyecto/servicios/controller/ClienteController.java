@@ -6,6 +6,8 @@ import com.proyecto.servicios.model.cliente.ClienteRegistroRequest;
 import com.proyecto.servicios.model.cliente.ClienteResponse;
 import com.proyecto.servicios.service.ClienteService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -52,9 +54,30 @@ public class ClienteController {
         return ResponseEntity.ok(clienteService.obtenerTodos());
     }
 
+    @GetMapping("/paginados")
+    public ResponseEntity<Page<ClienteResponse>> obtenerClientesPaginados(
+            @RequestParam(required = false) String filtro,
+            @RequestParam(required = false, defaultValue = "false") boolean soloActivos,
+            Pageable pageable) {
+
+        if (filtro != null && !filtro.isBlank()) {
+            return ResponseEntity.ok(clienteService.buscarClientesPaginados(filtro, pageable));
+        }
+        if (soloActivos) {
+            return ResponseEntity.ok(clienteService.obtenerActivosPaginados(pageable));
+        }
+        return ResponseEntity.ok(clienteService.obtenerPaginados(pageable));
+    }
+
     @GetMapping("/activos")
     public ResponseEntity<List<ClienteResponse>> obtenerClientesActivos() {
         return ResponseEntity.ok(clienteService.obtenerActivos());
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<ClienteResponse> obtenerMiPerfil(
+            @RequestAttribute(value = "clienteId", required = false) Integer clienteId) {
+        return ResponseEntity.ok(clienteService.obtenerPerfil(clienteId));
     }
 
     @GetMapping("/{id}")
@@ -63,17 +86,17 @@ public class ClienteController {
     }
 
     @GetMapping("/curp/{curp}")
-    public ResponseEntity<ClienteResponse> obtenerPorCurp(@PathVariable String curp) {
+    public ResponseEntity<List<ClienteResponse>> obtenerPorCurp(@PathVariable String curp) {
         return ResponseEntity.ok(clienteService.obtenerPorCurp(curp));
     }
 
     @GetMapping("/rfc/{rfc}")
-    public ResponseEntity<ClienteResponse> obtenerPorRfc(@PathVariable String rfc) {
+    public ResponseEntity<List<ClienteResponse>> obtenerPorRfc(@PathVariable String rfc) {
         return ResponseEntity.ok(clienteService.obtenerPorRfc(rfc));
     }
 
     @GetMapping("/correo/{correo}")
-    public ResponseEntity<ClienteResponse> obtenerPorCorreo(@PathVariable String correo) {
+    public ResponseEntity<List<ClienteResponse>> obtenerPorCorreo(@PathVariable String correo) {
         return ResponseEntity.ok(clienteService.obtenerPorCorreo(correo));
     }
 

@@ -40,7 +40,7 @@ class CuentaServiceImplTest {
         cuenta.setId(1);
         cuenta.setNumeroCuenta("1234567890");
         cuenta.setSaldo(new BigDecimal("5000.00"));
-        cuenta.setEstatus("ACTIVA");
+        cuenta.setActivo(true);
 
         when(cuentaRepository.findByNumeroCuenta("1234567890")).thenReturn(Optional.of(cuenta));
 
@@ -63,7 +63,7 @@ class CuentaServiceImplTest {
         Cuenta cuenta = new Cuenta();
         cuenta.setNumeroCuenta("1234567890");
         cuenta.setSaldo(new BigDecimal("1500.50"));
-        cuenta.setEstatus("ACTIVA");
+        cuenta.setActivo(true);
 
         when(cuentaRepository.findByNumeroCuenta("1234567890")).thenReturn(Optional.of(cuenta));
 
@@ -78,9 +78,9 @@ class CuentaServiceImplTest {
     void obtenerCuentasActivas_Exitoso() {
         Cuenta cuenta = new Cuenta();
         cuenta.setNumeroCuenta("1234567890");
-        cuenta.setEstatus("ACTIVA");
+        cuenta.setActivo(true);
 
-        when(cuentaRepository.findByEstatus("ACTIVA")).thenReturn(List.of(cuenta));
+        when(cuentaRepository.findByActivoTrue()).thenReturn(List.of(cuenta));
 
         List<CuentaResponse> response = cuentaService.obtenerCuentasActivas();
 

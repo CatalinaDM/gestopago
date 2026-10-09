@@ -16,6 +16,8 @@ import com.proyecto.servicios.repositorys.cliente.DomicilioRepository;
 import com.proyecto.servicios.repositorys.usuario.UsuarioRepository;
 import com.proyecto.servicios.service.ClienteService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -68,12 +70,6 @@ public class ClienteServiceImpl implements ClienteService {
         validarMayoriaDeEdad(request.getFechaNacimiento());
         validarUnicidad(request.getCurp(), request.getRfc(), request.getEmail());
 
-        BigDecimal saldoInicial = request.getSaldoInicial() != null ? request.getSaldoInicial() : BigDecimal.ZERO;
-        if (saldoInicial.compareTo(BigDecimal.ZERO) < 0) {
-            log.warn("VALIDACION-003: Intento de registro con saldo inicial negativo: {}", saldoInicial);
-            throw new ValidacionException("VALIDACION-003", "El saldo inicial no puede ser negativo");
-        }
-
         // 1. Guardar Cliente
         Cliente cliente = clienteMapper.toEntity(request);
         cliente.setActivo(true);
@@ -85,20 +81,22 @@ public class ClienteServiceImpl implements ClienteService {
 
         cliente = clienteRepository.save(cliente);
 
-        // 3. Crear Cuenta Bancaria Única
+        // 3. Crear Cuenta Bancaria Única (Saldo inicial definido por el sistema en $0.00)
         Cuenta cuenta = new Cuenta();
         cuenta.setCliente(cliente);
         cuenta.setNumeroCuenta(generarNumeroCuentaUnico());
-        cuenta.setSaldo(saldoInicial);
-        cuenta.setEstatus("ACTIVA");
+        cuenta.setSaldo(BigDecimal.ZERO);
+        cuenta.setActivo(true);
         cuentaRepository.save(cuenta);
         cliente.getCuentas().add(cuenta);
 
-        // 4. Crear Usuario de Acceso
+        // 4. Crear Usuario de Acceso (Rol 2 = CLIENTE)
         Usuario usuario = new Usuario();
         usuario.setCliente(cliente);
         usuario.setCorreo(request.getEmail());
         usuario.setPassword(passwordEncoder.encode(request.getPassword()));
+        usuario.setRol(2);
+        usuario.setIntentosFallidos(0);
         usuario.setActivo(true);
         usuarioRepository.save(usuario);
         cliente.setUsuario(usuario);
@@ -117,10 +115,31 @@ public class ClienteServiceImpl implements ClienteService {
     }
 
     @Override
+    public Page<ClienteResponse> obtenerPaginados(Pageable pageable) {
+        log.info("Consultando clientes paginados: página {}, tamaño {}", pageable.getPageNumber(), pageable.getPageSize());
+        return clienteRepository.findAll(pageable)
+                .map(clienteMapper::toResponse);
+    }
+
+    @Override
     public List<ClienteResponse> obtenerActivos() {
         log.info("Consultando clientes activos");
         List<Cliente> clientes = clienteRepository.findByActivoTrue();
         return clienteMapper.toResponseList(clientes);
+    }
+
+    @Override
+    public Page<ClienteResponse> obtenerActivosPaginados(Pageable pageable) {
+        log.info("Consultando clientes activos paginados: página {}, tamaño {}", pageable.getPageNumber(), pageable.getPageSize());
+        return clienteRepository.findByActivoTrue(pageable)
+                .map(clienteMapper::toResponse);
+    }
+
+    @Override
+    public Page<ClienteResponse> buscarClientesPaginados(String filtro, Pageable pageable) {
+        log.info("Buscando clientes paginados con filtro: {}", filtro);
+        return clienteRepository.buscarPorFiltroGeneralPaginado(filtro.trim(), pageable)
+                .map(clienteMapper::toResponse);
     }
 
     @Override
@@ -135,42 +154,39 @@ public class ClienteServiceImpl implements ClienteService {
     }
 
     @Override
-    public ClienteResponse obtenerPorCurp(String curp) {
-        log.info("Consultando cliente por CURP: {}", curp);
-        Cliente cliente = clienteRepository.findByCurpIgnoreCase(curp)
-                .orElseThrow(() -> {
-                    log.warn("CLIENTE-005: Cliente no encontrado con CURP: {}", curp);
-                    return new ClienteNoEncontradoException("CURP: " + curp);
-                });
-        return clienteMapper.toResponse(cliente);
+    public ClienteResponse obtenerPerfil(Integer clienteId) {
+        log.info("Consultando perfil de autoservicio para cliente ID: {}", clienteId);
+        if (clienteId == null) {
+            throw new ValidacionException("AUTH-005", "El usuario autenticado no tiene un cliente asociado");
+        }
+        return obtenerPorId(clienteId);
     }
 
     @Override
-    public ClienteResponse obtenerPorRfc(String rfc) {
-        log.info("Consultando cliente por RFC: {}", rfc);
-        Cliente cliente = clienteRepository.findByRfcIgnoreCase(rfc)
-                .orElseThrow(() -> {
-                    log.warn("CLIENTE-005: Cliente no encontrado con RFC: {}", rfc);
-                    return new ClienteNoEncontradoException("RFC: " + rfc);
-                });
-        return clienteMapper.toResponse(cliente);
+    public List<ClienteResponse> obtenerPorCurp(String curp) {
+        log.info("Buscando clientes por CURP parcial/exacta: {}", curp);
+        List<Cliente> clientes = clienteRepository.findByCurpContainingIgnoreCase(curp.trim());
+        return clienteMapper.toResponseList(clientes);
     }
 
     @Override
-    public ClienteResponse obtenerPorCorreo(String correo) {
-        log.info("Consultando cliente por Correo: {}", correo);
-        Cliente cliente = clienteRepository.findByEmailIgnoreCase(correo)
-                .orElseThrow(() -> {
-                    log.warn("CLIENTE-005: Cliente no encontrado con Correo: {}", correo);
-                    return new ClienteNoEncontradoException("Correo: " + correo);
-                });
-        return clienteMapper.toResponse(cliente);
+    public List<ClienteResponse> obtenerPorRfc(String rfc) {
+        log.info("Buscando clientes por RFC parcial/exacto: {}", rfc);
+        List<Cliente> clientes = clienteRepository.findByRfcContainingIgnoreCase(rfc.trim());
+        return clienteMapper.toResponseList(clientes);
+    }
+
+    @Override
+    public List<ClienteResponse> obtenerPorCorreo(String correo) {
+        log.info("Buscando clientes por Correo parcial/exacto: {}", correo);
+        List<Cliente> clientes = clienteRepository.findByEmailContainingIgnoreCase(correo.trim());
+        return clienteMapper.toResponseList(clientes);
     }
 
     @Override
     public ClienteResponse obtenerPorNumeroCuenta(String numeroCuenta) {
         log.info("Consultando cliente por Número de Cuenta: {}", numeroCuenta);
-        Cliente cliente = clienteRepository.findByNumeroCuenta(numeroCuenta)
+        Cliente cliente = clienteRepository.findByNumeroCuenta(numeroCuenta.trim())
                 .orElseThrow(() -> {
                     log.warn("CLIENTE-005: Cliente no encontrado con Número de Cuenta: {}", numeroCuenta);
                     return new ClienteNoEncontradoException("Número de cuenta: " + numeroCuenta);
@@ -190,14 +206,18 @@ public class ClienteServiceImpl implements ClienteService {
     @Override
     public List<ClienteResponse> buscarClientes(String filtro) {
         log.info("Buscando clientes con filtro general case-insensitive: {}", filtro);
-        List<Cliente> clientes = clienteRepository.buscarPorFiltroGeneral(filtro);
+        List<Cliente> clientes = clienteRepository.buscarPorFiltroGeneral(filtro.trim());
         return clienteMapper.toResponseList(clientes);
     }
 
     @Override
     public List<ClienteResponse> buscarPorCriterios(String curp, String rfc, String email, String numeroCuenta) {
         log.info("Buscando clientes por criterios combinados (CURP: {}, RFC: {}, Email: {}, Cuenta: {})", curp, rfc, email, numeroCuenta);
-        List<Cliente> clientes = clienteRepository.buscarPorCriterios(curp, rfc, email, numeroCuenta);
+        List<Cliente> clientes = clienteRepository.buscarPorCriterios(
+                curp != null ? curp.trim() : null,
+                rfc != null ? rfc.trim() : null,
+                email != null ? email.trim() : null,
+                numeroCuenta != null ? numeroCuenta.trim() : null);
         return clienteMapper.toResponseList(clientes);
     }
 
@@ -259,16 +279,22 @@ public class ClienteServiceImpl implements ClienteService {
 
         cliente.setActivo(false);
 
-        // Las cuentas bancarias se marcan como INACTIVAS para restringir transacciones u operaciones
+        // Baja lógica en cascada: Cuentas inactivas
         if (cliente.getCuentas() != null) {
             cliente.getCuentas().forEach(cuenta -> {
-                cuenta.setEstatus("INACTIVA");
-                log.info("Cuenta {} asociada al cliente ID: {} marcada como INACTIVA", cuenta.getNumeroCuenta(), id);
+                cuenta.setActivo(false);
+                log.info("Cuenta {} asociada al cliente ID: {} marcada como inactiva", cuenta.getNumeroCuenta(), id);
             });
         }
 
+        // Baja lógica en cascada: Usuario de acceso inactivo
+        if (cliente.getUsuario() != null) {
+            cliente.getUsuario().setActivo(false);
+            log.info("Usuario {} asociado al cliente ID: {} marcado como inactivo", cliente.getUsuario().getCorreo(), id);
+        }
+
         clienteRepository.save(cliente);
-        log.info("Baja lógica completada para el cliente ID: {} (usuario conserva acceso de solo consulta)", id);
+        log.info("Baja lógica completada exitosamente para el cliente ID: {}", id);
     }
 
     private void validarMayoriaDeEdad(LocalDate fechaNacimiento) {

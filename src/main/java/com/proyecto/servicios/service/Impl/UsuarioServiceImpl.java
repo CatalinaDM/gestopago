@@ -63,8 +63,25 @@ public class UsuarioServiceImpl implements UsuarioService {
         }
 
         usuario.setPassword(passwordEncoder.encode(request.getPasswordNuevo()));
+        usuario.setIntentosFallidos(0);
         usuarioRepository.save(usuario);
 
         log.info("Contraseña actualizada exitosamente para el usuario ID: {}", id);
+    }
+
+    @Override
+    @Transactional
+    public void desbloquearUsuario(Integer id) {
+        log.info("Desbloqueando usuario ID: {}", id);
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("AUTH-001: Usuario no encontrado con ID: {}", id);
+                    return new UsuarioNoEncontradoException(String.valueOf(id));
+                });
+
+        usuario.setActivo(true);
+        usuario.setIntentosFallidos(0);
+        usuarioRepository.save(usuario);
+        log.info("Usuario ID: {} reactivado y desbloqueado exitosamente", id);
     }
 }

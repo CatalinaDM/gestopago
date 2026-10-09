@@ -49,7 +49,7 @@ public class CuentaServiceImpl implements CuentaService {
     @Override
     public List<CuentaResponse> obtenerCuentasActivas() {
         log.info("Consultando todas las cuentas activas");
-        List<Cuenta> cuentas = cuentaRepository.findByEstatus("ACTIVA");
+        List<Cuenta> cuentas = cuentaRepository.findByActivoTrue();
         return cuentaMapper.toResponseList(cuentas);
     }
 }

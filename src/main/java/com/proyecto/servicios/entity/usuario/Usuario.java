@@ -19,7 +19,7 @@ public class Usuario {
     private Integer id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cliente_id", nullable = false, unique = true)
+    @JoinColumn(name = "cliente_id", unique = true)
     @JsonIgnore
     private Cliente cliente;
 
@@ -28,6 +28,12 @@ public class Usuario {
 
     @Column(name = "password", nullable = false, length = 255)
     private String password;
+
+    @Column(name = "rol", nullable = false)
+    private Integer rol = 2;
+
+    @Column(name = "intentos_fallidos", nullable = false)
+    private Integer intentosFallidos = 0;
 
     @Column(name = "activo", nullable = false)
     private Boolean activo = true;
@@ -42,6 +48,12 @@ public class Usuario {
     void onCreate() {
         this.fechaCreacion = LocalDateTime.now();
         this.fechaActualizacion = LocalDateTime.now();
+        if (this.rol == null) {
+            this.rol = 2;
+        }
+        if (this.intentosFallidos == null) {
+            this.intentosFallidos = 0;
+        }
         if (this.activo == null) {
             this.activo = true;
         }

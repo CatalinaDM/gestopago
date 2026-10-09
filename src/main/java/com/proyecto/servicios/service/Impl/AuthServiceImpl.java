@@ -41,19 +41,38 @@ public class AuthServiceImpl implements AuthService {
                 });
 
         if (Boolean.FALSE.equals(usuario.getActivo())) {
-            log.warn("AUTH-002: Intento de inicio de sesión de usuario inactivo: {}", request.getCorreo());
+            log.warn("AUTH-002: Intento de inicio de sesión de usuario inactivo o bloqueado: {}", request.getCorreo());
+            if (usuario.getIntentosFallidos() != null && usuario.getIntentosFallidos() >= 3) {
+                throw new UsuarioInactivoException("AUTH-002", "Acceso bloqueado por exceder el límite de intentos fallidos permitidos. Por favor, contacte al administrador para reactivar su cuenta.");
+            }
             throw new UsuarioInactivoException(request.getCorreo());
         }
 
         if (!passwordEncoder.matches(request.getPassword(), usuario.getPassword())) {
-            log.warn("AUTH-003: Contraseña incorrecta para el usuario: {}", request.getCorreo());
+            int intentos = (usuario.getIntentosFallidos() != null ? usuario.getIntentosFallidos() : 0) + 1;
+            usuario.setIntentosFallidos(intentos);
+            if (intentos >= 3) {
+                usuario.setActivo(false);
+                usuarioRepository.save(usuario);
+                log.warn("AUTH-002: Usuario bloqueado por alcanzar 3 intentos fallidos de login: {}", request.getCorreo());
+                throw new UsuarioInactivoException("AUTH-002", "Acceso bloqueado: ha excedido el límite de 3 intentos fallidos de contraseña. Por favor, contacte al administrador para desbloquear su cuenta.");
+            }
+            usuarioRepository.save(usuario);
+            log.warn("AUTH-003: Contraseña incorrecta para el usuario: {} (Intento {}/3)", request.getCorreo(), intentos);
             throw new CredencialesInvalidasException();
         }
 
-        Integer clienteId = usuario.getCliente() != null ? usuario.getCliente().getId() : null;
-        String token = jwtUtil.generarToken(usuario.getCorreo(), usuario.getId(), clienteId);
+        // Resetear contador de intentos tras autenticación exitosa
+        if (usuario.getIntentosFallidos() != null && usuario.getIntentosFallidos() > 0) {
+            usuario.setIntentosFallidos(0);
+            usuarioRepository.save(usuario);
+        }
 
-        log.info("Autenticación exitosa para usuario ID: {}", usuario.getId());
+        Integer clienteId = usuario.getCliente() != null ? usuario.getCliente().getId() : null;
+        Integer rol = usuario.getRol() != null ? usuario.getRol() : 2;
+        String token = jwtUtil.generarToken(usuario.getCorreo(), usuario.getId(), clienteId, rol);
+
+        log.info("Autenticación exitosa para usuario ID: {} (Rol: {})", usuario.getId(), rol == 1 ? "ADMIN" : "CLIENTE");
 
         return LoginResponse.builder()
                 .token(token)
@@ -61,6 +80,7 @@ public class AuthServiceImpl implements AuthService {
                 .usuarioId(usuario.getId())
                 .clienteId(clienteId)
                 .correo(usuario.getCorreo())
+                .rol(rol)
                 .build();
     }
 }

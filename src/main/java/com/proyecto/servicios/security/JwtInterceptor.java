@@ -28,6 +28,12 @@ public class JwtInterceptor implements HandlerInterceptor {
             return true;
         }
 
+        // Permitir registro público de clientes (Onboarding)
+        String uri = request.getRequestURI();
+        if ("POST".equalsIgnoreCase(request.getMethod()) && (uri.endsWith("/clientes") || uri.endsWith("/clientes/"))) {
+            return true;
+        }
+
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             escribirError(response, HttpStatus.UNAUTHORIZED, "AUTH-003", "Token de autorización requerido en formato Bearer");
@@ -43,6 +49,7 @@ public class JwtInterceptor implements HandlerInterceptor {
         request.setAttribute("usuarioCorreo", jwtUtil.obtenerCorreo(token));
         request.setAttribute("usuarioId", jwtUtil.obtenerUsuarioId(token));
         request.setAttribute("clienteId", jwtUtil.obtenerClienteId(token));
+        request.setAttribute("rol", jwtUtil.obtenerRol(token));
 
         return true;
     }

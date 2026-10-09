@@ -23,14 +23,14 @@ public class Cuenta {
     @JsonIgnore
     private Cliente cliente;
 
-    @Column(name = "numero_cuenta", nullable = false, unique = true, length = 20)
+    @Column(name = "numero_cuenta", nullable = false, unique = true, length = 10)
     private String numeroCuenta;
 
     @Column(name = "saldo", nullable = false, precision = 15, scale = 2)
     private BigDecimal saldo = BigDecimal.ZERO;
 
-    @Column(name = "estatus", nullable = false, length = 20)
-    private String estatus = "ACTIVA";
+    @Column(name = "activo", nullable = false)
+    private Boolean activo = true;
 
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private LocalDateTime fechaCreacion;
@@ -45,8 +45,8 @@ public class Cuenta {
         if (this.saldo == null) {
             this.saldo = BigDecimal.ZERO;
         }
-        if (this.estatus == null) {
-            this.estatus = "ACTIVA";
+        if (this.activo == null) {
+            this.activo = true;
         }
     }
 

@@ -15,5 +15,5 @@ public class SaldoCuentaResponse {
 
     private String numeroCuenta;
     private BigDecimal saldo;
-    private String estatus;
+    private Boolean activo;
 }

@@ -42,7 +42,7 @@ public class Cliente {
     @Column(name = "rfc", nullable = false, unique = true, length = 13)
     private String rfc;
 
-    @Column(name = "sexo", nullable = false, length = 20)
+    @Column(name = "sexo", nullable = false, length = 1)
     private String sexo;
 
     @Column(name = "nacionalidad", nullable = false, length = 50)

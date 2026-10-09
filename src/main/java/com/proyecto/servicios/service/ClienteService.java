@@ -4,6 +4,9 @@ import com.proyecto.servicios.model.cliente.ClienteActualizaRequest;
 import com.proyecto.servicios.model.cliente.ClienteRegistroRequest;
 import com.proyecto.servicios.model.cliente.ClienteResponse;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.time.LocalDate;
 import java.util.List;
 
@@ -13,15 +16,23 @@ public interface ClienteService {
 
     List<ClienteResponse> obtenerTodos();
 
+    Page<ClienteResponse> obtenerPaginados(Pageable pageable);
+
     List<ClienteResponse> obtenerActivos();
+
+    Page<ClienteResponse> obtenerActivosPaginados(Pageable pageable);
+
+    Page<ClienteResponse> buscarClientesPaginados(String filtro, Pageable pageable);
 
     ClienteResponse obtenerPorId(Integer id);
 
-    ClienteResponse obtenerPorCurp(String curp);
+    ClienteResponse obtenerPerfil(Integer clienteId);
 
-    ClienteResponse obtenerPorRfc(String rfc);
+    List<ClienteResponse> obtenerPorCurp(String curp);
 
-    ClienteResponse obtenerPorCorreo(String correo);
+    List<ClienteResponse> obtenerPorRfc(String rfc);
+
+    List<ClienteResponse> obtenerPorCorreo(String correo);
 
     ClienteResponse obtenerPorNumeroCuenta(String numeroCuenta);
 

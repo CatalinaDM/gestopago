@@ -1,6 +1,8 @@
 package com.proyecto.servicios.repositorys.cliente;
 
 import com.proyecto.servicios.entity.cliente.Cliente;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -27,6 +29,8 @@ public interface ClienteRepository extends JpaRepository<Cliente, Integer> {
 
     List<Cliente> findByActivoTrue();
 
+    Page<Cliente> findByActivoTrue(Pageable pageable);
+
     List<Cliente> findByFechaCreacionBetween(LocalDateTime inicio, LocalDateTime fin);
 
     boolean existsByCurpIgnoreCase(String curp);
@@ -48,6 +52,26 @@ public interface ClienteRepository extends JpaRepository<Cliente, Integer> {
            "LOWER(c.apellidoMaterno) LIKE LOWER(CONCAT('%', :filtro, '%')) OR " +
            "cta.numeroCuenta LIKE CONCAT('%', :filtro, '%'))")
     List<Cliente> buscarPorFiltroGeneral(@Param("filtro") String filtro);
+
+    @Query(value = "SELECT DISTINCT c FROM Cliente c LEFT JOIN c.cuentas cta WHERE " +
+           "(:filtro IS NULL OR :filtro = '' OR " +
+           "LOWER(c.curp) LIKE LOWER(CONCAT('%', :filtro, '%')) OR " +
+           "LOWER(c.rfc) LIKE LOWER(CONCAT('%', :filtro, '%')) OR " +
+           "LOWER(c.email) LIKE LOWER(CONCAT('%', :filtro, '%')) OR " +
+           "LOWER(c.nombre) LIKE LOWER(CONCAT('%', :filtro, '%')) OR " +
+           "LOWER(c.apellidoPaterno) LIKE LOWER(CONCAT('%', :filtro, '%')) OR " +
+           "LOWER(c.apellidoMaterno) LIKE LOWER(CONCAT('%', :filtro, '%')) OR " +
+           "cta.numeroCuenta LIKE CONCAT('%', :filtro, '%'))",
+           countQuery = "SELECT count(DISTINCT c) FROM Cliente c LEFT JOIN c.cuentas cta WHERE " +
+           "(:filtro IS NULL OR :filtro = '' OR " +
+           "LOWER(c.curp) LIKE LOWER(CONCAT('%', :filtro, '%')) OR " +
+           "LOWER(c.rfc) LIKE LOWER(CONCAT('%', :filtro, '%')) OR " +
+           "LOWER(c.email) LIKE LOWER(CONCAT('%', :filtro, '%')) OR " +
+           "LOWER(c.nombre) LIKE LOWER(CONCAT('%', :filtro, '%')) OR " +
+           "LOWER(c.apellidoPaterno) LIKE LOWER(CONCAT('%', :filtro, '%')) OR " +
+           "LOWER(c.apellidoMaterno) LIKE LOWER(CONCAT('%', :filtro, '%')) OR " +
+           "cta.numeroCuenta LIKE CONCAT('%', :filtro, '%'))")
+    Page<Cliente> buscarPorFiltroGeneralPaginado(@Param("filtro") String filtro, Pageable pageable);
 
     @Query("SELECT DISTINCT c FROM Cliente c LEFT JOIN c.cuentas cta WHERE " +
            "(:curp IS NULL OR LOWER(c.curp) LIKE LOWER(CONCAT('%', :curp, '%'))) AND " +

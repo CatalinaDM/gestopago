@@ -27,6 +27,7 @@ public class SecurityConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(jwtInterceptor)
                 .addPathPatterns(
+                        "/clientes/**",
                         "/cuentas/**",
                         "/usuarios/**"
                 )

@@ -17,21 +17,21 @@ import java.time.LocalDate;
 public class ClienteRegistroRequest {
 
     @NotBlank(message = "El nombre es obligatorio")
-    @Pattern(regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]+$", message = "El nombre solo debe contener letras y espacios")
+    @Pattern(regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\s'-]+$", message = "El nombre solo debe contener letras, acentos, diéresis, guiones o apóstrofes")
     @Size(min = 2, max = 50, message = "El nombre debe tener entre 2 y 50 caracteres")
     private String nombre;
 
-    @Pattern(regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]*$", message = "El segundo nombre solo debe contener letras y espacios")
+    @Pattern(regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\s'-]*$", message = "El segundo nombre solo debe contener letras, acentos, diéresis, guiones o apóstrofes")
     @Size(max = 50, message = "El segundo nombre no debe exceder 50 caracteres")
     private String segundoNombre;
 
     @NotBlank(message = "El apellido paterno es obligatorio")
-    @Pattern(regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]+$", message = "El apellido paterno solo debe contener letras y espacios")
+    @Pattern(regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\s'-]+$", message = "El apellido paterno solo debe contener letras, acentos, diéresis, guiones o apóstrofes")
     @Size(min = 2, max = 50, message = "El apellido paterno debe tener entre 2 y 50 caracteres")
     private String apellidoPaterno;
 
     @NotBlank(message = "El apellido materno es obligatorio")
-    @Pattern(regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]+$", message = "El apellido materno solo debe contener letras y espacios")
+    @Pattern(regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\s'-]+$", message = "El apellido materno solo debe contener letras, acentos, diéresis, guiones o apóstrofes")
     @Size(min = 2, max = 50, message = "El apellido materno debe tener entre 2 y 50 caracteres")
     private String apellidoMaterno;
 
@@ -40,16 +40,16 @@ public class ClienteRegistroRequest {
     private LocalDate fechaNacimiento;
 
     @NotBlank(message = "La CURP es obligatoria")
-    @Pattern(regexp = "^[A-Z]{4}\\d{6}[HM][A-Z]{5}[A-Z0-9]\\d$", message = "La CURP debe tener un formato válido de 18 caracteres")
+    @Pattern(regexp = "^[a-zA-Z]{4}\\d{6}[hHmM][a-zA-Z]{5}[a-zA-Z0-9]\\d$", message = "La CURP debe tener un formato oficial válido de 18 caracteres")
     private String curp;
 
     @NotBlank(message = "El RFC es obligatorio")
-    @Pattern(regexp = "^[A-ZÑ&]{4}\\d{6}[A-Z0-9]{3}$", message = "El RFC para persona física debe contener exactamente 13 caracteres con formato válido")
+    @Pattern(regexp = "^[a-zA-ZñÑ&]{4}\\d{6}[a-zA-Z0-9]{3}$", message = "El RFC para persona física debe cumplir el formato oficial AAAA000000XXX (13 caracteres)")
     @Size(min = 13, max = 13, message = "El RFC para persona física debe tener exactamente 13 caracteres")
     private String rfc;
 
     @NotBlank(message = "El sexo es obligatorio")
-    @Size(max = 20, message = "El sexo no debe exceder 20 caracteres")
+    @Pattern(regexp = "^[hmxHMX]$", message = "El sexo debe ser 'H' (Hombre), 'M' (Mujer) o 'X' (No binario)")
     private String sexo;
 
     @NotBlank(message = "La nacionalidad es obligatoria")
@@ -61,7 +61,7 @@ public class ClienteRegistroRequest {
     private String estadoCivil;
 
     @NotBlank(message = "El correo electrónico es obligatorio")
-    @Email(message = "El correo electrónico debe tener un formato válido")
+    @Email(regexp = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$", message = "El correo electrónico debe tener un formato válido (ej. usuario@dominio.com)")
     @Size(max = 100, message = "El correo electrónico no debe exceder 100 caracteres")
     private String email;
 
@@ -94,7 +94,4 @@ public class ClienteRegistroRequest {
         message = "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial"
     )
     private String password;
-
-    @DecimalMin(value = "0.00", message = "El saldo inicial no puede ser negativo")
-    private BigDecimal saldoInicial;
 }
