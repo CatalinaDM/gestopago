@@ -35,6 +35,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -246,5 +247,36 @@ class ClienteCicloVidaTest {
         LoginResponse loginExitoso = authService.login(new LoginRequest("bloqueo@example.com", "PasswordCorrecto!"));
         assertNotNull(loginExitoso);
         assertEquals("jwt.token.postDesbloqueo", loginExitoso.getToken());
+    }
+
+    @Test
+    @DisplayName("Ciclo de Vida: Baja lógica en cascada -> Reactivación en cascada por Administrador")
+    void cicloVida_BajaLogica_ReactivacionCascada_Exitoso() {
+        Cliente cliente = new Cliente();
+        cliente.setId(10);
+        cliente.setActivo(false);
+
+        Cuenta cuenta = new Cuenta();
+        cuenta.setNumeroCuenta("9876543210");
+        cuenta.setActivo(false);
+        cliente.setCuentas(new ArrayList<>(List.of(cuenta)));
+
+        Usuario usuario = new Usuario();
+        usuario.setCorreo("reactivar@example.com");
+        usuario.setActivo(false);
+        usuario.setIntentosFallidos(3);
+        cliente.setUsuario(usuario);
+
+        when(clienteRepository.findById(10)).thenReturn(Optional.of(cliente));
+        when(clienteRepository.save(any(Cliente.class))).thenReturn(cliente);
+
+        // Administrador reactiva al cliente
+        clienteService.reactivarCliente(10);
+
+        assertTrue(cliente.getActivo(), "El cliente debe volver a estar activo");
+        assertTrue(cuenta.getActivo(), "La cuenta debe volver a estar activa");
+        assertTrue(usuario.getActivo(), "El usuario debe volver a estar activo");
+        assertEquals(0, usuario.getIntentosFallidos(), "Los intentos fallidos deben resetearse a 0");
+        verify(clienteRepository).save(cliente);
     }
 }

@@ -176,6 +176,18 @@ public class ClienteController {
         return ResponseEntity.ok(response);
     }
 
+    @PatchMapping("/{id}/reactivar")
+    public ResponseEntity<GenericResponse> reactivarCliente(
+            @PathVariable Integer id,
+            @RequestAttribute(value = "rol", required = false) Integer rol) {
+        validarAdmin(rol);
+        clienteService.reactivarCliente(id);
+        GenericResponse response = new GenericResponse();
+        response.setCodigo(0);
+        response.setMensaje("Cliente y servicios asociados reactivados correctamente");
+        return ResponseEntity.ok(response);
+    }
+
     private void validarAdmin(Integer rol) {
         if (rol == null || rol != 1) {
             throw new com.proyecto.servicios.exception.AccesoDenegadoException(

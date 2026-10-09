@@ -75,10 +75,24 @@ class RbacSecurityTest {
         }
 
         @Test
+        @DisplayName("Cliente no puede reactivar clientes -> 403 Forbidden")
+        void clienteNoPuedeReactivar() {
+            assertThrows(AccesoDenegadoException.class, () ->
+                    clienteController.reactivarCliente(99, 2));
+        }
+
+        @Test
         @DisplayName("Administrador sí puede listar todos los clientes")
         void adminPuedeListarClientes() {
             clienteController.obtenerClientes(1, null, null, null, null, null);
             verify(clienteService).obtenerTodos();
+        }
+
+        @Test
+        @DisplayName("Administrador sí puede reactivar clientes")
+        void adminPuedeReactivar() {
+            clienteController.reactivarCliente(99, 1);
+            verify(clienteService).reactivarCliente(99);
         }
 
         @Test

@@ -45,4 +45,6 @@ public interface ClienteService {
     ClienteResponse actualizarCliente(Integer id, ClienteActualizaRequest request);
 
     void darDeBajaCliente(Integer id);
+
+    void reactivarCliente(Integer id);
 }

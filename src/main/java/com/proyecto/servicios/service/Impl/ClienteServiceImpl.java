@@ -297,6 +297,38 @@ public class ClienteServiceImpl implements ClienteService {
         log.info("Baja lógica completada exitosamente para el cliente ID: {}", id);
     }
 
+    @Override
+    @Transactional
+    public void reactivarCliente(Integer id) {
+        log.info("Ejecutando reactivación en cascada para cliente ID: {}", id);
+
+        Cliente cliente = clienteRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("CLIENTE-005: Cliente no encontrado con ID: {}", id);
+                    return new ClienteNoEncontradoException("ID: " + id);
+                });
+
+        cliente.setActivo(true);
+
+        // Reactivación en cascada: Cuentas activas
+        if (cliente.getCuentas() != null) {
+            cliente.getCuentas().forEach(cuenta -> {
+                cuenta.setActivo(true);
+                log.info("Cuenta {} asociada al cliente ID: {} reactivada", cuenta.getNumeroCuenta(), id);
+            });
+        }
+
+        // Reactivación en cascada: Usuario de acceso activo con 0 intentos fallidos
+        if (cliente.getUsuario() != null) {
+            cliente.getUsuario().setActivo(true);
+            cliente.getUsuario().setIntentosFallidos(0);
+            log.info("Usuario {} asociado al cliente ID: {} reactivado exitosamente", cliente.getUsuario().getCorreo(), id);
+        }
+
+        clienteRepository.save(cliente);
+        log.info("Reactivación en cascada completada exitosamente para el cliente ID: {}", id);
+    }
+
     private void validarMayoriaDeEdad(LocalDate fechaNacimiento) {
         if (fechaNacimiento == null) {
             throw new ValidacionException("VALIDACION-002", "La fecha de nacimiento es obligatoria");
