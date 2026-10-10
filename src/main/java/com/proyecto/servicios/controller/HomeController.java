@@ -1,13 +1,16 @@
 package com.proyecto.servicios.controller;
 
-import org.springframework.stereotype.Controller;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-@Controller
+import java.io.IOException;
+
+@RestController
 public class HomeController {
 
     @GetMapping("/")
-    public String home() {
-        return "redirect:/swagger-ui/index.html";
+    public void home(HttpServletResponse response) throws IOException {
+        response.sendRedirect("/swagger-ui/index.html");
     }
 }
