@@ -1,5 +1,6 @@
 package com.proyecto.servicios.controller;
 
+import com.proyecto.servicios.model.GenericRequest;
 import com.proyecto.servicios.model.GenericResponse;
 import com.proyecto.servicios.model.usuario.ActualizarPasswordRequest;
 import com.proyecto.servicios.model.usuario.UsuarioResponse;
@@ -29,22 +30,10 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarioService.obtenerPorId(id));
     }
 
-    @PutMapping("/{id}/password")
+    @PutMapping("/actualizar-password")
     public ResponseEntity<GenericResponse> actualizarPassword(
-            @PathVariable Integer id,
-            @RequestAttribute(value = "usuarioId", required = false) Integer tokenUsuarioId,
-            @Valid @RequestBody ActualizarPasswordRequest request) {
-
-        // Solo el propio usuario autenticado puede cambiar su contraseña (prevención IDOR estricta)
-        if (tokenUsuarioId == null || !tokenUsuarioId.equals(id)) {
-            throw new com.proyecto.servicios.exception.AccesoDenegadoException(
-                    "AUTH-007", "Acceso denegado: Solo el propio usuario autenticado puede modificar su contraseña");
-        }
-
-        usuarioService.actualizarPassword(id, request);
-        GenericResponse response = new GenericResponse();
-        response.setCodigo(0);
-        response.setMensaje("Contraseña actualizada correctamente");
+            @Valid @RequestBody GenericRequest<ActualizarPasswordRequest> request) {
+        GenericResponse response = usuarioService.actualizarPassword(request);
         return ResponseEntity.ok(response);
     }
 

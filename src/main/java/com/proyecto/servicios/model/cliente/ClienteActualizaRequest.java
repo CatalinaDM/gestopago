@@ -16,6 +16,9 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class ClienteActualizaRequest {
 
+    @NotNull(message = "El id del cliente es obligatorio")
+    private Integer id;
+
     @NotBlank(message = "El nombre es obligatorio")
     @Pattern(regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\s'-]+$", message = "El nombre solo debe contener letras, acentos, diéresis, guiones o apóstrofes")
     @Size(min = 2, max = 50, message = "El nombre debe tener entre 2 y 50 caracteres")

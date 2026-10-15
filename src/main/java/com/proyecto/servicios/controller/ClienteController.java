@@ -1,5 +1,6 @@
 package com.proyecto.servicios.controller;
 
+import com.proyecto.servicios.model.GenericRequest;
 import com.proyecto.servicios.model.GenericResponse;
 import com.proyecto.servicios.model.cliente.ClienteActualizaRequest;
 import com.proyecto.servicios.model.cliente.ClienteRegistroRequest;
@@ -27,7 +28,8 @@ public class ClienteController {
     }
 
     @PostMapping
-    public ResponseEntity<ClienteResponse> registrarCliente(@Valid @RequestBody ClienteRegistroRequest request) {
+    public ResponseEntity<ClienteResponse> registrarCliente(
+            @Valid @RequestBody GenericRequest<ClienteRegistroRequest> request) {
         ClienteResponse response = clienteService.registrarCliente(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -148,20 +150,21 @@ public class ClienteController {
         return ResponseEntity.ok(clienteService.buscarClientes(filtro));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping
     public ResponseEntity<ClienteResponse> actualizarCliente(
-            @PathVariable Integer id,
             @RequestAttribute(value = "rol", required = false) Integer rol,
             @RequestAttribute(value = "clienteId", required = false) Integer tokenClienteId,
-            @Valid @RequestBody ClienteActualizaRequest request) {
+            @Valid @RequestBody GenericRequest<ClienteActualizaRequest> request) {
+
+        Integer idDelBody = request.getDatos() != null ? request.getDatos().getId() : null;
 
         // Solo Admin o el propio cliente pueden modificar su registro
-        if ((rol == null || rol != 1) && (tokenClienteId == null || !tokenClienteId.equals(id))) {
+        if ((rol == null || rol != 1) && (tokenClienteId == null || !tokenClienteId.equals(idDelBody))) {
             throw new com.proyecto.servicios.exception.AccesoDenegadoException(
                     "AUTH-004", "Acceso denegado: No tiene permisos para modificar la información de otro cliente");
         }
 
-        return ResponseEntity.ok(clienteService.actualizarCliente(id, request));
+        return ResponseEntity.ok(clienteService.actualizarCliente(request));
     }
 
     @DeleteMapping("/{id}")

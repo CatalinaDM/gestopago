@@ -1,6 +1,7 @@
 package com.proyecto.servicios.controller;
 
 import com.proyecto.servicios.model.EliminaPersonaRequest;
+import com.proyecto.servicios.model.GenericRequest;
 import com.proyecto.servicios.model.GenericResponse;
 import com.proyecto.servicios.model.PersonasRequest;
 import com.proyecto.servicios.service.PersonaService;
@@ -23,17 +24,20 @@ public class PersonaController {
     }
 
     @PostMapping(value = "/personas", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<GenericResponse> crearUser(@Valid @RequestBody PersonasRequest personasRequest) {
-        return new ResponseEntity<>(personaService.creaPersona(personasRequest), HttpStatus.OK);
+    public ResponseEntity<GenericResponse> crearUser(
+            @Valid @RequestBody GenericRequest<PersonasRequest> request) {
+        return new ResponseEntity<>(personaService.creaPersona(request), HttpStatus.OK);
     }
 
     @PutMapping(value = "/personasActualiza", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<GenericResponse> actualizUser(@Valid @RequestBody PersonasRequest personasRequest) {
-        return new ResponseEntity<>(personaService.actualizaPersona(personasRequest), HttpStatus.OK);
+    public ResponseEntity<GenericResponse> actualizUser(
+            @Valid @RequestBody GenericRequest<PersonasRequest> request) {
+        return new ResponseEntity<>(personaService.actualizaPersona(request), HttpStatus.OK);
     }
 
     @PutMapping(value = "/personasElimina", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<GenericResponse> eliminaUser(@Valid @RequestBody EliminaPersonaRequest personasRequest) {
-        return new ResponseEntity<>(personaService.eliminaPersona(personasRequest), HttpStatus.OK);
+    public ResponseEntity<GenericResponse> eliminaUser(
+            @Valid @RequestBody GenericRequest<EliminaPersonaRequest> request) {
+        return new ResponseEntity<>(personaService.eliminaPersona(request), HttpStatus.OK);
     }
 }

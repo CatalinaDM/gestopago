@@ -2,6 +2,7 @@ package com.proyecto.servicios.service.Impl;
 
 import com.proyecto.servicios.entity.sf.Personas;
 import com.proyecto.servicios.model.EliminaPersonaRequest;
+import com.proyecto.servicios.model.GenericRequest;
 import com.proyecto.servicios.model.GenericResponse;
 import com.proyecto.servicios.model.PersonaResponse;
 import com.proyecto.servicios.model.PersonasRequest;
@@ -24,7 +25,8 @@ public class PersonasServiceImpl implements PersonaService {
     }
 
     @Override
-    public PersonaResponse creaPersona(PersonasRequest personasRequest) {
+    public PersonaResponse creaPersona(GenericRequest<PersonasRequest> genericRequest) {
+        PersonasRequest personasRequest = genericRequest.getDatos();
         PersonaResponse person = new PersonaResponse();
         Personas persona = new Personas();
         persona.setNombre(personasRequest.getNombre());
@@ -34,14 +36,13 @@ public class PersonasServiceImpl implements PersonaService {
         person.setCodigo(1);
         person.setMensaje("Exito");
         BeanUtils.copyProperties(persona, person);
-
         return person;
     }
 
     @Override
-    public GenericResponse eliminaPersona(EliminaPersonaRequest eliminaPersonaRequest) {
+    public GenericResponse eliminaPersona(GenericRequest<EliminaPersonaRequest> genericRequest) {
+        EliminaPersonaRequest eliminaPersonaRequest = genericRequest.getDatos();
         GenericResponse genericResponse = new GenericResponse();
-
         Optional<Personas> existePersona = personasRepository.findByNombre(eliminaPersonaRequest.getNombre());
         if (existePersona.isPresent()) {
             Personas personaElimina = existePersona.get();
@@ -56,7 +57,8 @@ public class PersonasServiceImpl implements PersonaService {
     }
 
     @Override
-    public GenericResponse actualizaPersona(PersonasRequest personasRequest) {
+    public GenericResponse actualizaPersona(GenericRequest<PersonasRequest> genericRequest) {
+        PersonasRequest personasRequest = genericRequest.getDatos();
         GenericResponse genericResponse = new GenericResponse();
         Optional<Personas> existePersona = personasRepository.findByNombre(personasRequest.getNombre());
         if (existePersona.isPresent()) {

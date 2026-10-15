@@ -7,6 +7,7 @@ import com.proyecto.servicios.entity.usuario.Usuario;
 import com.proyecto.servicios.exception.*;
 import com.proyecto.servicios.mapper.ClienteMapper;
 import com.proyecto.servicios.mapper.DomicilioMapper;
+import com.proyecto.servicios.model.GenericRequest;
 import com.proyecto.servicios.model.cliente.ClienteActualizaRequest;
 import com.proyecto.servicios.model.cliente.ClienteRegistroRequest;
 import com.proyecto.servicios.model.cliente.ClienteResponse;
@@ -64,7 +65,8 @@ public class ClienteServiceImpl implements ClienteService {
 
     @Override
     @Transactional
-    public ClienteResponse registrarCliente(ClienteRegistroRequest request) {
+    public ClienteResponse registrarCliente(GenericRequest<ClienteRegistroRequest> genericRequest) {
+        ClienteRegistroRequest request = genericRequest.getDatos();
         log.info("Iniciando registro de nuevo cliente con CURP: {}, RFC: {}", request.getCurp(), request.getRfc());
 
         validarMayoriaDeEdad(request.getFechaNacimiento());
@@ -223,7 +225,9 @@ public class ClienteServiceImpl implements ClienteService {
 
     @Override
     @Transactional
-    public ClienteResponse actualizarCliente(Integer id, ClienteActualizaRequest request) {
+    public ClienteResponse actualizarCliente(GenericRequest<ClienteActualizaRequest> genericRequest) {
+        ClienteActualizaRequest request = genericRequest.getDatos();
+        Integer id = request.getId();
         log.info("Actualizando información del cliente ID: {}", id);
 
         Cliente cliente = clienteRepository.findById(id)
