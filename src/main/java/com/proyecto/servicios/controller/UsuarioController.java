@@ -3,6 +3,8 @@ package com.proyecto.servicios.controller;
 import com.proyecto.servicios.model.GenericRequest;
 import com.proyecto.servicios.model.GenericResponse;
 import com.proyecto.servicios.model.usuario.ActualizarPasswordRequest;
+import com.proyecto.servicios.model.usuario.UsuarioConsultaRequest;
+import com.proyecto.servicios.model.usuario.UsuarioDesbloqueoRequest;
 import com.proyecto.servicios.model.usuario.UsuarioResponse;
 import com.proyecto.servicios.service.UsuarioService;
 import jakarta.validation.Valid;
@@ -19,15 +21,15 @@ public class UsuarioController {
         this.usuarioService = usuarioService;
     }
 
-    @GetMapping("/{id}")
+    @PostMapping("/consulta")
     public ResponseEntity<UsuarioResponse> obtenerPorId(
-            @PathVariable Integer id,
+            @Valid @RequestBody GenericRequest<UsuarioConsultaRequest> request,
             @RequestAttribute(value = "rol", required = false) Integer rol) {
         if (rol == null || rol != 1) {
             throw new com.proyecto.servicios.exception.AccesoDenegadoException(
                     "AUTH-004", "Acceso denegado: Solo los administradores pueden consultar información de usuarios");
         }
-        return ResponseEntity.ok(usuarioService.obtenerPorId(id));
+        return ResponseEntity.ok(usuarioService.obtenerPorId(request));
     }
 
     @PutMapping("/actualizar-password")
@@ -46,9 +48,9 @@ public class UsuarioController {
         return ResponseEntity.ok(response);
     }
 
-    @PatchMapping("/{id}/desbloquear")
+    @PostMapping("/desbloquear")
     public ResponseEntity<GenericResponse> desbloquearUsuario(
-            @PathVariable Integer id,
+            @Valid @RequestBody GenericRequest<UsuarioDesbloqueoRequest> request,
             @RequestAttribute(value = "rol", required = false) Integer rol) {
 
         if (rol == null || rol != 1) {
@@ -56,7 +58,7 @@ public class UsuarioController {
                     "AUTH-008", "Acceso denegado: Solo un administrador puede desbloquear usuarios");
         }
 
-        usuarioService.desbloquearUsuario(id);
+        usuarioService.desbloquearUsuario(request);
         GenericResponse response = new GenericResponse();
         response.setCodigo(0);
         response.setMensaje("Usuario desbloqueado y reactivado exitosamente");

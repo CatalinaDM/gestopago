@@ -136,15 +136,21 @@ class RbacSecurityTest {
         @Test
         @DisplayName("Cliente no puede consultar detalles de usuarios por ID -> 403 Forbidden")
         void clienteNoPuedeConsultarUsuarioPorId() {
+            com.proyecto.servicios.model.GenericRequest<com.proyecto.servicios.model.usuario.UsuarioConsultaRequest> req = new com.proyecto.servicios.model.GenericRequest<>();
+            req.setDatos(new com.proyecto.servicios.model.usuario.UsuarioConsultaRequest(10));
+
             assertThrows(AccesoDenegadoException.class, () ->
-                    usuarioController.obtenerPorId(10, 2));
+                    usuarioController.obtenerPorId(req, 2));
         }
 
         @Test
         @DisplayName("Cliente no puede desbloquear usuarios -> 403 Forbidden")
         void clienteNoPuedeDesbloquearUsuario() {
+            com.proyecto.servicios.model.GenericRequest<com.proyecto.servicios.model.usuario.UsuarioDesbloqueoRequest> req = new com.proyecto.servicios.model.GenericRequest<>();
+            req.setDatos(new com.proyecto.servicios.model.usuario.UsuarioDesbloqueoRequest(10));
+
             assertThrows(AccesoDenegadoException.class, () ->
-                    usuarioController.desbloquearUsuario(10, 2));
+                    usuarioController.desbloquearUsuario(req, 2));
         }
 
         @Test
