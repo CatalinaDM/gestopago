@@ -1,8 +1,10 @@
 package com.proyecto.servicios.controller;
 
+import com.proyecto.servicios.model.GenericRequest;
 import com.proyecto.servicios.model.cuenta.CuentaResponse;
 import com.proyecto.servicios.model.cuenta.SaldoCuentaResponse;
 import com.proyecto.servicios.service.CuentaService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,23 +30,25 @@ public class CuentaController {
         return ResponseEntity.ok(cuentaService.obtenerCuentasPorCliente(clienteId));
     }
 
-    @GetMapping("/{numeroCuenta}")
+    @PostMapping("/consulta")
     public ResponseEntity<CuentaResponse> obtenerPorNumeroCuenta(
-            @PathVariable String numeroCuenta,
+            @Valid @RequestBody GenericRequest<com.proyecto.servicios.model.cuenta.CuentaConsultaRequest> request,
             @RequestAttribute(value = "rol", required = false) Integer rol,
             @RequestAttribute(value = "clienteId", required = false) Integer clienteId) {
-        return ResponseEntity.ok(cuentaService.obtenerPorNumeroCuenta(numeroCuenta, rol, clienteId));
+        String num = request != null && request.getDatos() != null ? request.getDatos().getNumeroCuenta() : null;
+        return ResponseEntity.ok(cuentaService.obtenerPorNumeroCuenta(num, rol, clienteId));
     }
 
-    @GetMapping("/{numeroCuenta}/saldo")
+    @PostMapping("/saldo")
     public ResponseEntity<SaldoCuentaResponse> obtenerSaldo(
-            @PathVariable String numeroCuenta,
+            @Valid @RequestBody GenericRequest<com.proyecto.servicios.model.cuenta.CuentaConsultaRequest> request,
             @RequestAttribute(value = "rol", required = false) Integer rol,
             @RequestAttribute(value = "clienteId", required = false) Integer clienteId) {
-        return ResponseEntity.ok(cuentaService.obtenerSaldo(numeroCuenta, rol, clienteId));
+        String num = request != null && request.getDatos() != null ? request.getDatos().getNumeroCuenta() : null;
+        return ResponseEntity.ok(cuentaService.obtenerSaldo(num, rol, clienteId));
     }
 
-    @GetMapping("/activas")
+    @PostMapping("/activas")
     public ResponseEntity<List<CuentaResponse>> obtenerCuentasActivas(
             @RequestAttribute(value = "rol", required = false) Integer rol) {
         if (rol == null || rol != 1) {
