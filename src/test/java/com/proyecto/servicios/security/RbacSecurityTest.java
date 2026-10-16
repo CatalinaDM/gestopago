@@ -159,19 +159,33 @@ class RbacSecurityTest {
         @Test
         @DisplayName("Usuario no puede cambiar la contraseña de otro usuario (IDOR) -> 403 Forbidden")
         void usuarioNoPuedeCambiarPasswordDeOtro() {
-            ActualizarPasswordRequest req = new ActualizarPasswordRequest("PassActual1!", "PassNuevo1!");
+            ActualizarPasswordRequest req = ActualizarPasswordRequest.builder()
+                    .id(10)
+                    .passwordActual("PassActual1!")
+                    .passwordNuevo("PassNuevo1!")
+                    .build();
+            com.proyecto.servicios.model.GenericRequest<ActualizarPasswordRequest> genericReq = new com.proyecto.servicios.model.GenericRequest<>();
+            genericReq.setDatos(req);
+
             // Usuario con ID 5 intenta cambiar el password del usuario con ID 10
             assertThrows(AccesoDenegadoException.class, () ->
-                    usuarioController.actualizarPassword(10, 5, req));
+                    usuarioController.actualizarPassword(genericReq, null, 5));
         }
 
         @Test
         @DisplayName("Usuario autenticado sí puede cambiar su propia contraseña")
         void usuarioPuedeCambiarSuPropiaPassword() {
-            ActualizarPasswordRequest req = new ActualizarPasswordRequest("PassActual1!", "PassNuevo1!");
+            ActualizarPasswordRequest req = ActualizarPasswordRequest.builder()
+                    .id(5)
+                    .passwordActual("PassActual1!")
+                    .passwordNuevo("PassNuevo1!")
+                    .build();
+            com.proyecto.servicios.model.GenericRequest<ActualizarPasswordRequest> genericReq = new com.proyecto.servicios.model.GenericRequest<>();
+            genericReq.setDatos(req);
+
             // Usuario con ID 5 cambia su propio password (ID 5)
-            usuarioController.actualizarPassword(5, 5, req);
-            verify(usuarioService).actualizarPassword(5, req);
+            usuarioController.actualizarPassword(genericReq, null, 5);
+            verify(usuarioService).actualizarPassword(genericReq);
         }
     }
 }

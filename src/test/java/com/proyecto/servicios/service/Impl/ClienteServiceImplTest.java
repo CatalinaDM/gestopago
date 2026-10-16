@@ -87,13 +87,16 @@ class ClienteServiceImplTest {
         when(cuentaRepository.existsByNumeroCuenta(anyString())).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("hashed_password");
 
+        com.proyecto.servicios.model.GenericRequest<ClienteRegistroRequest> genericRequest = new com.proyecto.servicios.model.GenericRequest<>();
+        genericRequest.setDatos(request);
+
         when(clienteRepository.save(any(Cliente.class))).thenAnswer(invocation -> {
             Cliente c = invocation.getArgument(0);
             c.setId(1);
             return c;
         });
 
-        ClienteResponse response = clienteService.registrarCliente(request);
+        ClienteResponse response = clienteService.registrarCliente(genericRequest);
 
         assertNotNull(response);
         assertEquals("Juan Carlos Lopez Garcia", response.getNombreCompleto());
@@ -108,10 +111,12 @@ class ClienteServiceImplTest {
     void registrarCliente_ErrorMenorDeEdad() {
         ClienteRegistroRequest request = crearRequestValido();
         request.setFechaNacimiento(LocalDate.now().minusYears(17));
+        com.proyecto.servicios.model.GenericRequest<ClienteRegistroRequest> genericRequest = new com.proyecto.servicios.model.GenericRequest<>();
+        genericRequest.setDatos(request);
 
         ValidacionException exception = assertThrows(
                 ValidacionException.class,
-                () -> clienteService.registrarCliente(request)
+                () -> clienteService.registrarCliente(genericRequest)
         );
 
         assertEquals("VALIDACION-002", exception.getCodigo());
@@ -122,10 +127,12 @@ class ClienteServiceImplTest {
     void registrarCliente_ErrorCurpDuplicada() {
         ClienteRegistroRequest request = crearRequestValido();
         when(clienteRepository.existsByCurpIgnoreCase(request.getCurp())).thenReturn(true);
+        com.proyecto.servicios.model.GenericRequest<ClienteRegistroRequest> genericRequest = new com.proyecto.servicios.model.GenericRequest<>();
+        genericRequest.setDatos(request);
 
         CurpDuplicadaException exception = assertThrows(
                 CurpDuplicadaException.class,
-                () -> clienteService.registrarCliente(request)
+                () -> clienteService.registrarCliente(genericRequest)
         );
 
         assertEquals("CLIENTE-002", exception.getCodigo());
@@ -136,10 +143,12 @@ class ClienteServiceImplTest {
         ClienteRegistroRequest request = crearRequestValido();
         when(clienteRepository.existsByCurpIgnoreCase(anyString())).thenReturn(false);
         when(clienteRepository.existsByRfcIgnoreCase(request.getRfc())).thenReturn(true);
+        com.proyecto.servicios.model.GenericRequest<ClienteRegistroRequest> genericRequest = new com.proyecto.servicios.model.GenericRequest<>();
+        genericRequest.setDatos(request);
 
         RfcDuplicadoException exception = assertThrows(
                 RfcDuplicadoException.class,
-                () -> clienteService.registrarCliente(request)
+                () -> clienteService.registrarCliente(genericRequest)
         );
 
         assertEquals("CLIENTE-003", exception.getCodigo());
@@ -151,10 +160,12 @@ class ClienteServiceImplTest {
         when(clienteRepository.existsByCurpIgnoreCase(anyString())).thenReturn(false);
         when(clienteRepository.existsByRfcIgnoreCase(anyString())).thenReturn(false);
         when(clienteRepository.existsByEmailIgnoreCase(request.getEmail())).thenReturn(true);
+        com.proyecto.servicios.model.GenericRequest<ClienteRegistroRequest> genericRequest = new com.proyecto.servicios.model.GenericRequest<>();
+        genericRequest.setDatos(request);
 
         CorreoDuplicadoException exception = assertThrows(
                 CorreoDuplicadoException.class,
-                () -> clienteService.registrarCliente(request)
+                () -> clienteService.registrarCliente(genericRequest)
         );
 
         assertEquals("CLIENTE-004", exception.getCodigo());
@@ -279,8 +290,12 @@ class ClienteServiceImplTest {
                 .ingresoMensual(new BigDecimal("35000.00"))
                 .domicilio(crearDomicilioDTO())
                 .build();
+        request.setId(1);
 
-        ClienteResponse response = clienteService.actualizarCliente(1, request);
+        com.proyecto.servicios.model.GenericRequest<ClienteActualizaRequest> genericRequest = new com.proyecto.servicios.model.GenericRequest<>();
+        genericRequest.setDatos(request);
+
+        ClienteResponse response = clienteService.actualizarCliente(genericRequest);
 
         assertNotNull(response);
         assertEquals("Juan Pedro Lopez Garcia", response.getNombreCompleto());
