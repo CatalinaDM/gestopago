@@ -33,13 +33,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiErrorResponse> manejarValidaciones(MethodArgumentNotValidException exception, HttpServletRequest request) {
-        java.util.Map<String, String> erroresDetallados = new java.util.HashMap<>();
+        java.util.Map<String, String> erroresDetallados = new java.util.LinkedHashMap<>();
         for (FieldError error : exception.getBindingResult().getFieldErrors()) {
-            erroresDetallados.putIfAbsent(error.getField(), error.getDefaultMessage());
+            // Se asocia el campo al mensaje de validación específico de Bean Validation
+            erroresDetallados.put(error.getField(), error.getDefaultMessage());
         }
 
         String mensajeResumen = exception.getBindingResult().getFieldErrors().stream()
-                .map(FieldError::getDefaultMessage)
+                .map(e -> e.getField() + ": " + e.getDefaultMessage())
                 .distinct()
                 .collect(Collectors.joining("; "));
 
