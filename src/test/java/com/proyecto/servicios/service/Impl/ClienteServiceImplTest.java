@@ -346,6 +346,41 @@ class ClienteServiceImplTest {
                 .build();
     }
 
+    @Test
+    void cambiarEstadoCliente_Baja_Exitoso() {
+        Cliente cliente = crearClienteEntidad();
+        when(clienteRepository.findById(1)).thenReturn(Optional.of(cliente));
+
+        com.proyecto.servicios.model.GenericRequest<com.proyecto.servicios.model.cliente.ClienteAccionRequest> request = new com.proyecto.servicios.model.GenericRequest<>();
+        com.proyecto.servicios.model.cliente.ClienteAccionRequest datos = new com.proyecto.servicios.model.cliente.ClienteAccionRequest(1, com.proyecto.servicios.enums.TipoAccionCliente.BAJA);
+        request.setDatos(datos);
+
+        com.proyecto.servicios.model.GenericResponse response = clienteService.cambiarEstadoCliente(request);
+
+        assertNotNull(response);
+        assertEquals(0, response.getCodigo());
+        assertFalse(cliente.getActivo());
+        verify(clienteRepository).save(cliente);
+    }
+
+    @Test
+    void cambiarEstadoCliente_Reactivar_Exitoso() {
+        Cliente cliente = crearClienteEntidad();
+        cliente.setActivo(false);
+        when(clienteRepository.findById(1)).thenReturn(Optional.of(cliente));
+
+        com.proyecto.servicios.model.GenericRequest<com.proyecto.servicios.model.cliente.ClienteAccionRequest> request = new com.proyecto.servicios.model.GenericRequest<>();
+        com.proyecto.servicios.model.cliente.ClienteAccionRequest datos = new com.proyecto.servicios.model.cliente.ClienteAccionRequest(1, com.proyecto.servicios.enums.TipoAccionCliente.REACTIVAR);
+        request.setDatos(datos);
+
+        com.proyecto.servicios.model.GenericResponse response = clienteService.cambiarEstadoCliente(request);
+
+        assertNotNull(response);
+        assertEquals(0, response.getCodigo());
+        assertTrue(cliente.getActivo());
+        verify(clienteRepository).save(cliente);
+    }
+
     private DomicilioDTO crearDomicilioDTO() {
         return DomicilioDTO.builder()
                 .calle("Av. Reforma")

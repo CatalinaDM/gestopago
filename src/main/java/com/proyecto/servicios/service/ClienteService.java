@@ -22,6 +22,8 @@ public interface ClienteService {
     Page<ClienteResponse> consultar(GenericRequest<ClienteConsultaRequest> request);
 
     // Acciones por DTO
+    GenericResponse cambiarEstadoCliente(GenericRequest<ClienteAccionRequest> request);
+
     GenericResponse darDeBajaCliente(GenericRequest<ClienteAccionRequest> request);
 
     GenericResponse reactivarCliente(GenericRequest<ClienteAccionRequest> request);

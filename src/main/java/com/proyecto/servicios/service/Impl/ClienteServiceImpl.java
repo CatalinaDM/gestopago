@@ -191,6 +191,26 @@ public class ClienteServiceImpl implements ClienteService {
 
     @Override
     @Transactional
+    public GenericResponse cambiarEstadoCliente(GenericRequest<ClienteAccionRequest> request) {
+        if (request == null || request.getDatos() == null) {
+            throw new ValidacionException("VALIDACION-001", "Los datos de la petición son obligatorios");
+        }
+        ClienteAccionRequest datos = request.getDatos();
+        if (datos.getAccion() == null) {
+            throw new ValidacionException("VALIDACION-001", "La acción es obligatoria: BAJA o REACTIVAR");
+        }
+
+        if (datos.getAccion() == com.proyecto.servicios.enums.TipoAccionCliente.BAJA) {
+            darDeBajaCliente(datos.getId());
+            return GenericResponse.success("Cliente y servicios asociados dados de baja correctamente");
+        } else {
+            reactivarCliente(datos.getId());
+            return GenericResponse.success("Cliente y servicios asociados reactivados correctamente");
+        }
+    }
+
+    @Override
+    @Transactional
     public GenericResponse darDeBajaCliente(GenericRequest<ClienteAccionRequest> request) {
         Integer id = request != null && request.getDatos() != null ? request.getDatos().getId() : null;
         darDeBajaCliente(id);
