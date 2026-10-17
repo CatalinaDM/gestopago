@@ -93,30 +93,6 @@ public class ClienteController {
         return ResponseEntity.ok(clienteService.cambiarEstadoCliente(request));
     }
 
-    @PostMapping("/baja")
-    @Operation(
-            summary = "Dar de baja lógica a un cliente (Solo Admin)",
-            description = "Desactiva lógicamente al cliente, sus cuentas bancarias asociadas y su usuario de acceso. Nota: Puede utilizar también el endpoint unificado POST /clientes/estado."
-    )
-    public ResponseEntity<GenericResponse> darDeBajaCliente(
-            @Valid @RequestBody GenericRequest<ClienteAccionRequest> request,
-            @Parameter(hidden = true) @RequestAttribute(value = "rol", required = false) Integer rol) {
-        validarAdmin(rol);
-        return ResponseEntity.ok(clienteService.darDeBajaCliente(request));
-    }
-
-    @PostMapping("/reactivar")
-    @Operation(
-            summary = "Reactivar a un cliente dado de baja (Solo Admin)",
-            description = "Reactiva al cliente, sus cuentas asociadas y su usuario de acceso, restableciendo el contador de intentos fallidos. Nota: Puede utilizar también el endpoint unificado POST /clientes/estado."
-    )
-    public ResponseEntity<GenericResponse> reactivarCliente(
-            @Valid @RequestBody GenericRequest<ClienteAccionRequest> request,
-            @Parameter(hidden = true) @RequestAttribute(value = "rol", required = false) Integer rol) {
-        validarAdmin(rol);
-        return ResponseEntity.ok(clienteService.reactivarCliente(request));
-    }
-
     private void validarAdmin(Integer rol) {
         if (rol == null || rol != 1) {
             throw new com.proyecto.servicios.exception.AccesoDenegadoException();

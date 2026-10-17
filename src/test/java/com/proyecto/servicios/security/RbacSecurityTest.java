@@ -55,23 +55,13 @@ class RbacSecurityTest {
         }
 
         @Test
-        @DisplayName("Cliente no puede dar de baja clientes -> 403 Forbidden")
-        void clienteNoPuedeDarDeBaja() {
+        @DisplayName("Cliente no puede cambiar estado de clientes -> 403 Forbidden")
+        void clienteNoPuedeCambiarEstado() {
             com.proyecto.servicios.model.GenericRequest<com.proyecto.servicios.model.cliente.ClienteAccionRequest> req = new com.proyecto.servicios.model.GenericRequest<>();
-            req.setDatos(new com.proyecto.servicios.model.cliente.ClienteAccionRequest(99));
+            req.setDatos(new com.proyecto.servicios.model.cliente.ClienteAccionRequest(99, com.proyecto.servicios.enums.TipoAccionCliente.BAJA));
 
             assertThrows(AccesoDenegadoException.class, () ->
-                    clienteController.darDeBajaCliente(req, 2));
-        }
-
-        @Test
-        @DisplayName("Cliente no puede reactivar clientes -> 403 Forbidden")
-        void clienteNoPuedeReactivar() {
-            com.proyecto.servicios.model.GenericRequest<com.proyecto.servicios.model.cliente.ClienteAccionRequest> req = new com.proyecto.servicios.model.GenericRequest<>();
-            req.setDatos(new com.proyecto.servicios.model.cliente.ClienteAccionRequest(99));
-
-            assertThrows(AccesoDenegadoException.class, () ->
-                    clienteController.reactivarCliente(req, 2));
+                    clienteController.cambiarEstadoCliente(req, 2));
         }
 
         @Test
@@ -83,13 +73,13 @@ class RbacSecurityTest {
         }
 
         @Test
-        @DisplayName("Administrador sí puede reactivar clientes")
-        void adminPuedeReactivar() {
+        @DisplayName("Administrador sí puede cambiar estado de clientes")
+        void adminPuedeCambiarEstado() {
             com.proyecto.servicios.model.GenericRequest<com.proyecto.servicios.model.cliente.ClienteAccionRequest> req = new com.proyecto.servicios.model.GenericRequest<>();
-            req.setDatos(new com.proyecto.servicios.model.cliente.ClienteAccionRequest(99));
+            req.setDatos(new com.proyecto.servicios.model.cliente.ClienteAccionRequest(99, com.proyecto.servicios.enums.TipoAccionCliente.REACTIVAR));
 
-            clienteController.reactivarCliente(req, 1);
-            verify(clienteService).reactivarCliente(req);
+            clienteController.cambiarEstadoCliente(req, 1);
+            verify(clienteService).cambiarEstadoCliente(req);
         }
 
         @Test
