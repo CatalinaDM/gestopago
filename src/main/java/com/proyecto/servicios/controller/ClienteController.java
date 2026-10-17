@@ -63,8 +63,7 @@ public class ClienteController {
 
         // Solo Admin o el propio cliente pueden modificar su registro
         if ((rol == null || rol != 1) && (tokenClienteId == null || !tokenClienteId.equals(idDelBody))) {
-            throw new com.proyecto.servicios.exception.AccesoDenegadoException(
-                    "AUTH-004", "Acceso denegado: No tiene permisos para modificar la información de otro cliente");
+            throw new com.proyecto.servicios.exception.AccesoDenegadoException();
         }
 
         return ResponseEntity.ok(clienteService.actualizarCliente(request));
@@ -76,10 +75,7 @@ public class ClienteController {
             @RequestAttribute(value = "rol", required = false) Integer rol) {
         validarAdmin(rol);
         clienteService.darDeBajaCliente(request);
-        GenericResponse response = new GenericResponse();
-        response.setCodigo(0);
-        response.setMensaje("Cliente y servicios asociados dados de baja correctamente");
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(GenericResponse.success("Cliente y servicios asociados dados de baja correctamente"));
     }
 
     @PostMapping("/reactivar")
@@ -88,16 +84,12 @@ public class ClienteController {
             @RequestAttribute(value = "rol", required = false) Integer rol) {
         validarAdmin(rol);
         clienteService.reactivarCliente(request);
-        GenericResponse response = new GenericResponse();
-        response.setCodigo(0);
-        response.setMensaje("Cliente y servicios asociados reactivados correctamente");
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(GenericResponse.success("Cliente y servicios asociados reactivados correctamente"));
     }
 
     private void validarAdmin(Integer rol) {
         if (rol == null || rol != 1) {
-            throw new com.proyecto.servicios.exception.AccesoDenegadoException(
-                    "AUTH-004", "Acceso denegado: Se requieren permisos de Administrador para esta operación");
+            throw new com.proyecto.servicios.exception.AccesoDenegadoException();
         }
     }
 }

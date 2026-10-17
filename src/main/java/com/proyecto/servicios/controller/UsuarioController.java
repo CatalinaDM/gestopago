@@ -26,8 +26,7 @@ public class UsuarioController {
             @Valid @RequestBody GenericRequest<UsuarioConsultaRequest> request,
             @RequestAttribute(value = "rol", required = false) Integer rol) {
         if (rol == null || rol != 1) {
-            throw new com.proyecto.servicios.exception.AccesoDenegadoException(
-                    "AUTH-004", "Acceso denegado: Solo los administradores pueden consultar información de usuarios");
+            throw new com.proyecto.servicios.exception.AccesoDenegadoException();
         }
         return ResponseEntity.ok(usuarioService.obtenerPorId(request));
     }
@@ -40,8 +39,7 @@ public class UsuarioController {
 
         Integer idTarget = request.getDatos() != null ? request.getDatos().getId() : null;
         if ((rol == null || rol != 1) && (usuarioId != null && !usuarioId.equals(idTarget))) {
-            throw new com.proyecto.servicios.exception.AccesoDenegadoException(
-                    "AUTH-004", "Acceso denegado: No tiene permisos para modificar la contraseña de otro usuario");
+            throw new com.proyecto.servicios.exception.AccesoDenegadoException();
         }
 
         GenericResponse response = usuarioService.actualizarPassword(request);
@@ -54,14 +52,10 @@ public class UsuarioController {
             @RequestAttribute(value = "rol", required = false) Integer rol) {
 
         if (rol == null || rol != 1) {
-            throw new com.proyecto.servicios.exception.AccesoDenegadoException(
-                    "AUTH-008", "Acceso denegado: Solo un administrador puede desbloquear usuarios");
+            throw new com.proyecto.servicios.exception.AccesoDenegadoException();
         }
 
         usuarioService.desbloquearUsuario(request);
-        GenericResponse response = new GenericResponse();
-        response.setCodigo(0);
-        response.setMensaje("Usuario desbloqueado y reactivado exitosamente");
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(GenericResponse.success("Usuario desbloqueado y reactivado exitosamente"));
     }
 }

@@ -24,8 +24,7 @@ public class CuentaController {
     public ResponseEntity<List<CuentaResponse>> obtenerMisCuentas(
             @RequestAttribute(value = "clienteId", required = false) Integer clienteId) {
         if (clienteId == null) {
-            throw new com.proyecto.servicios.exception.AccesoDenegadoException(
-                    "AUTH-005", "El usuario autenticado no tiene un cliente asociado");
+            throw new com.proyecto.servicios.exception.AccesoDenegadoException();
         }
         return ResponseEntity.ok(cuentaService.obtenerCuentasPorCliente(clienteId));
     }
@@ -52,8 +51,7 @@ public class CuentaController {
     public ResponseEntity<List<CuentaResponse>> obtenerCuentasActivas(
             @RequestAttribute(value = "rol", required = false) Integer rol) {
         if (rol == null || rol != 1) {
-            throw new com.proyecto.servicios.exception.AccesoDenegadoException(
-                    "AUTH-004", "Acceso denegado: Solo los administradores pueden consultar la lista global de cuentas");
+            throw new com.proyecto.servicios.exception.AccesoDenegadoException();
         }
         return ResponseEntity.ok(cuentaService.obtenerCuentasActivas());
     }
