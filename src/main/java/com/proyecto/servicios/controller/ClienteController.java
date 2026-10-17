@@ -47,9 +47,6 @@ public class ClienteController {
     @PostMapping("/me")
     public ResponseEntity<ClienteResponse> obtenerMiPerfil(
             @RequestAttribute(value = "clienteId", required = false) Integer clienteId) {
-        if (clienteId == null) {
-            throw new com.proyecto.servicios.exception.AccesoDenegadoException("AUTH-005", "El usuario autenticado no tiene un cliente asociado");
-        }
         return ResponseEntity.ok(clienteService.obtenerPerfil(clienteId));
     }
 
@@ -74,8 +71,7 @@ public class ClienteController {
             @Valid @RequestBody GenericRequest<ClienteAccionRequest> request,
             @RequestAttribute(value = "rol", required = false) Integer rol) {
         validarAdmin(rol);
-        clienteService.darDeBajaCliente(request);
-        return ResponseEntity.ok(GenericResponse.success("Cliente y servicios asociados dados de baja correctamente"));
+        return ResponseEntity.ok(clienteService.darDeBajaCliente(request));
     }
 
     @PostMapping("/reactivar")
@@ -83,8 +79,7 @@ public class ClienteController {
             @Valid @RequestBody GenericRequest<ClienteAccionRequest> request,
             @RequestAttribute(value = "rol", required = false) Integer rol) {
         validarAdmin(rol);
-        clienteService.reactivarCliente(request);
-        return ResponseEntity.ok(GenericResponse.success("Cliente y servicios asociados reactivados correctamente"));
+        return ResponseEntity.ok(clienteService.reactivarCliente(request));
     }
 
     private void validarAdmin(Integer rol) {

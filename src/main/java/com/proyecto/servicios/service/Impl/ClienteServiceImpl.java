@@ -8,6 +8,7 @@ import com.proyecto.servicios.exception.*;
 import com.proyecto.servicios.mapper.ClienteMapper;
 import com.proyecto.servicios.mapper.DomicilioMapper;
 import com.proyecto.servicios.model.GenericRequest;
+import com.proyecto.servicios.model.GenericResponse;
 import com.proyecto.servicios.model.cliente.ClienteAccionRequest;
 import com.proyecto.servicios.model.cliente.ClienteActualizaRequest;
 import com.proyecto.servicios.model.cliente.ClienteConsultaRequest;
@@ -190,16 +191,18 @@ public class ClienteServiceImpl implements ClienteService {
 
     @Override
     @Transactional
-    public void darDeBajaCliente(GenericRequest<ClienteAccionRequest> request) {
+    public GenericResponse darDeBajaCliente(GenericRequest<ClienteAccionRequest> request) {
         Integer id = request != null && request.getDatos() != null ? request.getDatos().getId() : null;
         darDeBajaCliente(id);
+        return GenericResponse.success("Cliente y servicios asociados dados de baja correctamente");
     }
 
     @Override
     @Transactional
-    public void reactivarCliente(GenericRequest<ClienteAccionRequest> request) {
+    public GenericResponse reactivarCliente(GenericRequest<ClienteAccionRequest> request) {
         Integer id = request != null && request.getDatos() != null ? request.getDatos().getId() : null;
         reactivarCliente(id);
+        return GenericResponse.success("Cliente y servicios asociados reactivados correctamente");
     }
 
     @Override

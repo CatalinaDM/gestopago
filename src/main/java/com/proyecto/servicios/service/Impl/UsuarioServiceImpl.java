@@ -95,14 +95,14 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Override
     @Transactional
-    public void desbloquearUsuario(GenericRequest<UsuarioDesbloqueoRequest> request) {
+    public GenericResponse desbloquearUsuario(GenericRequest<UsuarioDesbloqueoRequest> request) {
         Integer id = request.getDatos() != null ? request.getDatos().getId() : null;
-        desbloquearUsuario(id);
+        return desbloquearUsuario(id);
     }
 
     @Override
     @Transactional
-    public void desbloquearUsuario(Integer id) {
+    public GenericResponse desbloquearUsuario(Integer id) {
         log.info("Desbloqueando usuario ID: {}", id);
         if (id == null) {
             throw new UsuarioNoEncontradoException("ID nulo");
@@ -117,5 +117,6 @@ public class UsuarioServiceImpl implements UsuarioService {
         usuario.setIntentosFallidos(0);
         usuarioRepository.save(usuario);
         log.info("Usuario ID: {} reactivado y desbloqueado exitosamente", id);
+        return GenericResponse.success("Usuario desbloqueado y reactivado exitosamente");
     }
 }

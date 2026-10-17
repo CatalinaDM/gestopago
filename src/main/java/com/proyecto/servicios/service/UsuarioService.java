@@ -13,10 +13,10 @@ public interface UsuarioService {
 
     GenericResponse actualizarPassword(GenericRequest<ActualizarPasswordRequest> request);
 
-    void desbloquearUsuario(GenericRequest<UsuarioDesbloqueoRequest> request);
+    GenericResponse desbloquearUsuario(GenericRequest<UsuarioDesbloqueoRequest> request);
 
     // Sobrecargas de conveniencia para servicios internos / tests
     UsuarioResponse obtenerPorId(Integer id);
 
-    void desbloquearUsuario(Integer id);
+    GenericResponse desbloquearUsuario(Integer id);
 }

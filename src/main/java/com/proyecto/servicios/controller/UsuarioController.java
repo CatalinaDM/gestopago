@@ -55,7 +55,6 @@ public class UsuarioController {
             throw new com.proyecto.servicios.exception.AccesoDenegadoException();
         }
 
-        usuarioService.desbloquearUsuario(request);
-        return ResponseEntity.ok(GenericResponse.success("Usuario desbloqueado y reactivado exitosamente"));
+        return ResponseEntity.ok(usuarioService.desbloquearUsuario(request));
     }
 }

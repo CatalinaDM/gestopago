@@ -1,6 +1,7 @@
 package com.proyecto.servicios.service;
 
 import com.proyecto.servicios.model.GenericRequest;
+import com.proyecto.servicios.model.GenericResponse;
 import com.proyecto.servicios.model.cliente.ClienteAccionRequest;
 import com.proyecto.servicios.model.cliente.ClienteActualizaRequest;
 import com.proyecto.servicios.model.cliente.ClienteConsultaRequest;
@@ -21,9 +22,9 @@ public interface ClienteService {
     Page<ClienteResponse> consultar(GenericRequest<ClienteConsultaRequest> request);
 
     // Acciones por DTO
-    void darDeBajaCliente(GenericRequest<ClienteAccionRequest> request);
+    GenericResponse darDeBajaCliente(GenericRequest<ClienteAccionRequest> request);
 
-    void reactivarCliente(GenericRequest<ClienteAccionRequest> request);
+    GenericResponse reactivarCliente(GenericRequest<ClienteAccionRequest> request);
 
     ClienteResponse actualizarCliente(GenericRequest<ClienteActualizaRequest> request);
 
