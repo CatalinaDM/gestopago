@@ -7,6 +7,8 @@ import com.proyecto.servicios.mapper.UsuarioMapper;
 import com.proyecto.servicios.model.GenericRequest;
 import com.proyecto.servicios.model.GenericResponse;
 import com.proyecto.servicios.model.usuario.ActualizarPasswordRequest;
+import com.proyecto.servicios.model.usuario.UsuarioConsultaRequest;
+import com.proyecto.servicios.model.usuario.UsuarioDesbloqueoRequest;
 import com.proyecto.servicios.model.usuario.UsuarioResponse;
 import com.proyecto.servicios.repositorys.usuario.UsuarioRepository;
 import com.proyecto.servicios.service.UsuarioService;
@@ -33,8 +35,17 @@ public class UsuarioServiceImpl implements UsuarioService {
     }
 
     @Override
+    public UsuarioResponse obtenerPorId(GenericRequest<UsuarioConsultaRequest> request) {
+        Integer id = request.getDatos() != null ? request.getDatos().getId() : null;
+        return obtenerPorId(id);
+    }
+
+    @Override
     public UsuarioResponse obtenerPorId(Integer id) {
         log.info("Consultando usuario por ID: {}", id);
+        if (id == null) {
+            throw new UsuarioNoEncontradoException("ID nulo");
+        }
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> {
                     log.warn("AUTH-001: Usuario no encontrado con ID: {}", id);
@@ -84,8 +95,18 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Override
     @Transactional
-    public void desbloquearUsuario(Integer id) {
+    public GenericResponse desbloquearUsuario(GenericRequest<UsuarioDesbloqueoRequest> request) {
+        Integer id = request.getDatos() != null ? request.getDatos().getId() : null;
+        return desbloquearUsuario(id);
+    }
+
+    @Override
+    @Transactional
+    public GenericResponse desbloquearUsuario(Integer id) {
         log.info("Desbloqueando usuario ID: {}", id);
+        if (id == null) {
+            throw new UsuarioNoEncontradoException("ID nulo");
+        }
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> {
                     log.warn("AUTH-001: Usuario no encontrado con ID: {}", id);
@@ -96,5 +117,6 @@ public class UsuarioServiceImpl implements UsuarioService {
         usuario.setIntentosFallidos(0);
         usuarioRepository.save(usuario);
         log.info("Usuario ID: {} reactivado y desbloqueado exitosamente", id);
+        return GenericResponse.success("Usuario desbloqueado y reactivado exitosamente");
     }
 }

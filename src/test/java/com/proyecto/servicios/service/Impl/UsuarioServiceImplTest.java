@@ -66,14 +66,20 @@ class UsuarioServiceImplTest {
         usuario.setId(1);
         usuario.setPassword("old_hash");
 
-        ActualizarPasswordRequest request = new ActualizarPasswordRequest("OldPassword123!", "NewPassword123!");
+        ActualizarPasswordRequest datos = ActualizarPasswordRequest.builder()
+                .id(1)
+                .passwordActual("OldPassword123!")
+                .passwordNuevo("NewPassword123!")
+                .build();
+        com.proyecto.servicios.model.GenericRequest<ActualizarPasswordRequest> request = new com.proyecto.servicios.model.GenericRequest<>();
+        request.setDatos(datos);
 
         when(usuarioRepository.findById(1)).thenReturn(Optional.of(usuario));
         when(passwordEncoder.matches("OldPassword123!", "old_hash")).thenReturn(true);
         when(passwordEncoder.matches("NewPassword123!", "old_hash")).thenReturn(false);
         when(passwordEncoder.encode("NewPassword123!")).thenReturn("new_hash");
 
-        usuarioService.actualizarPassword(1, request);
+        usuarioService.actualizarPassword(request);
 
         assertEquals("new_hash", usuario.getPassword());
         verify(usuarioRepository).save(usuario);
@@ -85,12 +91,18 @@ class UsuarioServiceImplTest {
         usuario.setId(1);
         usuario.setPassword("old_hash");
 
-        ActualizarPasswordRequest request = new ActualizarPasswordRequest("WrongPassword!", "NewPassword123!");
+        ActualizarPasswordRequest datos = ActualizarPasswordRequest.builder()
+                .id(1)
+                .passwordActual("WrongPassword!")
+                .passwordNuevo("NewPassword123!")
+                .build();
+        com.proyecto.servicios.model.GenericRequest<ActualizarPasswordRequest> request = new com.proyecto.servicios.model.GenericRequest<>();
+        request.setDatos(datos);
 
         when(usuarioRepository.findById(1)).thenReturn(Optional.of(usuario));
         when(passwordEncoder.matches("WrongPassword!", "old_hash")).thenReturn(false);
 
-        assertThrows(ContrasenaInvalidaException.class, () -> usuarioService.actualizarPassword(1, request));
+        assertThrows(ContrasenaInvalidaException.class, () -> usuarioService.actualizarPassword(request));
         verify(usuarioRepository, never()).save(any());
     }
 
@@ -100,12 +112,18 @@ class UsuarioServiceImplTest {
         usuario.setId(1);
         usuario.setPassword("old_hash");
 
-        ActualizarPasswordRequest request = new ActualizarPasswordRequest("SamePassword123!", "SamePassword123!");
+        ActualizarPasswordRequest datos = ActualizarPasswordRequest.builder()
+                .id(1)
+                .passwordActual("SamePassword123!")
+                .passwordNuevo("SamePassword123!")
+                .build();
+        com.proyecto.servicios.model.GenericRequest<ActualizarPasswordRequest> request = new com.proyecto.servicios.model.GenericRequest<>();
+        request.setDatos(datos);
 
         when(usuarioRepository.findById(1)).thenReturn(Optional.of(usuario));
         when(passwordEncoder.matches("SamePassword123!", "old_hash")).thenReturn(true);
 
-        assertThrows(ContrasenaInvalidaException.class, () -> usuarioService.actualizarPassword(1, request));
+        assertThrows(ContrasenaInvalidaException.class, () -> usuarioService.actualizarPassword(request));
         verify(usuarioRepository, never()).save(any());
     }
 }

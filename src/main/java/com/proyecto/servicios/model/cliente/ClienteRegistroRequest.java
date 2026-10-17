@@ -40,12 +40,13 @@ public class ClienteRegistroRequest {
     private LocalDate fechaNacimiento;
 
     @NotBlank(message = "La CURP es obligatoria")
-    @Pattern(regexp = "^[a-zA-Z]{4}\\d{6}[hHmM][a-zA-Z]{5}[a-zA-Z0-9]\\d$", message = "La CURP debe tener un formato oficial válido de 18 caracteres")
+    @Size(min = 18, max = 18, message = "La CURP debe contener exactamente 18 caracteres")
+    @Pattern(regexp = "^[a-zA-Z]{4}\\d{6}[hHmM][a-zA-Z]{5}[a-zA-Z0-9]\\d$", message = "La CURP tiene un formato inválido. Debe cumplir con la estructura oficial (ej. AAAA000000HDFRRN01)")
     private String curp;
 
     @NotBlank(message = "El RFC es obligatorio")
-    @Pattern(regexp = "^[a-zA-ZñÑ&]{4}\\d{6}[a-zA-Z0-9]{3}$", message = "El RFC para persona física debe cumplir el formato oficial AAAA000000XXX (13 caracteres)")
     @Size(min = 13, max = 13, message = "El RFC para persona física debe tener exactamente 13 caracteres")
+    @Pattern(regexp = "^[a-zA-ZñÑ&]{4}\\d{6}[a-zA-Z0-9]{3}$", message = "El RFC tiene un formato inválido. Debe cumplir el formato oficial AAAA000000XXX")
     private String rfc;
 
     @NotBlank(message = "El sexo es obligatorio")

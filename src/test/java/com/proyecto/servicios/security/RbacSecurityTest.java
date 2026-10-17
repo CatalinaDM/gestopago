@@ -47,52 +47,49 @@ class RbacSecurityTest {
     class ClientesSecurity {
 
         @Test
-        @DisplayName("Cliente no puede listar todos los clientes -> 403 Forbidden")
-        void clienteNoPuedeListarClientes() {
+        @DisplayName("Cliente no puede consultar clientes -> 403 Forbidden")
+        void clienteNoPuedeConsultarClientes() {
+            com.proyecto.servicios.model.GenericRequest<com.proyecto.servicios.model.cliente.ClienteConsultaRequest> req = new com.proyecto.servicios.model.GenericRequest<>();
             assertThrows(AccesoDenegadoException.class, () ->
-                    clienteController.obtenerClientes(2, null, null, null, null, null));
-        }
-
-        @Test
-        @DisplayName("Cliente no puede listar clientes paginados -> 403 Forbidden")
-        void clienteNoPuedeListarPaginados() {
-            assertThrows(AccesoDenegadoException.class, () ->
-                    clienteController.obtenerClientesPaginados(2, null, false, Pageable.unpaged()));
-        }
-
-        @Test
-        @DisplayName("Cliente no puede consultar otro cliente por ID -> 403 Forbidden")
-        void clienteNoPuedeConsultarPorId() {
-            assertThrows(AccesoDenegadoException.class, () ->
-                    clienteController.obtenerPorId(99, 2));
+                    clienteController.consultarClientes(2, req));
         }
 
         @Test
         @DisplayName("Cliente no puede dar de baja clientes -> 403 Forbidden")
         void clienteNoPuedeDarDeBaja() {
+            com.proyecto.servicios.model.GenericRequest<com.proyecto.servicios.model.cliente.ClienteAccionRequest> req = new com.proyecto.servicios.model.GenericRequest<>();
+            req.setDatos(new com.proyecto.servicios.model.cliente.ClienteAccionRequest(99));
+
             assertThrows(AccesoDenegadoException.class, () ->
-                    clienteController.darDeBajaCliente(99, 2));
+                    clienteController.darDeBajaCliente(req, 2));
         }
 
         @Test
         @DisplayName("Cliente no puede reactivar clientes -> 403 Forbidden")
         void clienteNoPuedeReactivar() {
+            com.proyecto.servicios.model.GenericRequest<com.proyecto.servicios.model.cliente.ClienteAccionRequest> req = new com.proyecto.servicios.model.GenericRequest<>();
+            req.setDatos(new com.proyecto.servicios.model.cliente.ClienteAccionRequest(99));
+
             assertThrows(AccesoDenegadoException.class, () ->
-                    clienteController.reactivarCliente(99, 2));
+                    clienteController.reactivarCliente(req, 2));
         }
 
         @Test
-        @DisplayName("Administrador sí puede listar todos los clientes")
-        void adminPuedeListarClientes() {
-            clienteController.obtenerClientes(1, null, null, null, null, null);
-            verify(clienteService).obtenerTodos();
+        @DisplayName("Administrador sí puede consultar clientes")
+        void adminPuedeConsultarClientes() {
+            com.proyecto.servicios.model.GenericRequest<com.proyecto.servicios.model.cliente.ClienteConsultaRequest> req = new com.proyecto.servicios.model.GenericRequest<>();
+            clienteController.consultarClientes(1, req);
+            verify(clienteService).consultar(req);
         }
 
         @Test
         @DisplayName("Administrador sí puede reactivar clientes")
         void adminPuedeReactivar() {
-            clienteController.reactivarCliente(99, 1);
-            verify(clienteService).reactivarCliente(99);
+            com.proyecto.servicios.model.GenericRequest<com.proyecto.servicios.model.cliente.ClienteAccionRequest> req = new com.proyecto.servicios.model.GenericRequest<>();
+            req.setDatos(new com.proyecto.servicios.model.cliente.ClienteAccionRequest(99));
+
+            clienteController.reactivarCliente(req, 1);
+            verify(clienteService).reactivarCliente(req);
         }
 
         @Test
@@ -136,15 +133,21 @@ class RbacSecurityTest {
         @Test
         @DisplayName("Cliente no puede consultar detalles de usuarios por ID -> 403 Forbidden")
         void clienteNoPuedeConsultarUsuarioPorId() {
+            com.proyecto.servicios.model.GenericRequest<com.proyecto.servicios.model.usuario.UsuarioConsultaRequest> req = new com.proyecto.servicios.model.GenericRequest<>();
+            req.setDatos(new com.proyecto.servicios.model.usuario.UsuarioConsultaRequest(10));
+
             assertThrows(AccesoDenegadoException.class, () ->
-                    usuarioController.obtenerPorId(10, 2));
+                    usuarioController.obtenerPorId(req, 2));
         }
 
         @Test
         @DisplayName("Cliente no puede desbloquear usuarios -> 403 Forbidden")
         void clienteNoPuedeDesbloquearUsuario() {
+            com.proyecto.servicios.model.GenericRequest<com.proyecto.servicios.model.usuario.UsuarioDesbloqueoRequest> req = new com.proyecto.servicios.model.GenericRequest<>();
+            req.setDatos(new com.proyecto.servicios.model.usuario.UsuarioDesbloqueoRequest(10));
+
             assertThrows(AccesoDenegadoException.class, () ->
-                    usuarioController.desbloquearUsuario(10, 2));
+                    usuarioController.desbloquearUsuario(req, 2));
         }
 
         @Test
@@ -159,19 +162,33 @@ class RbacSecurityTest {
         @Test
         @DisplayName("Usuario no puede cambiar la contraseña de otro usuario (IDOR) -> 403 Forbidden")
         void usuarioNoPuedeCambiarPasswordDeOtro() {
-            ActualizarPasswordRequest req = new ActualizarPasswordRequest("PassActual1!", "PassNuevo1!");
+            ActualizarPasswordRequest req = ActualizarPasswordRequest.builder()
+                    .id(10)
+                    .passwordActual("PassActual1!")
+                    .passwordNuevo("PassNuevo1!")
+                    .build();
+            com.proyecto.servicios.model.GenericRequest<ActualizarPasswordRequest> genericReq = new com.proyecto.servicios.model.GenericRequest<>();
+            genericReq.setDatos(req);
+
             // Usuario con ID 5 intenta cambiar el password del usuario con ID 10
             assertThrows(AccesoDenegadoException.class, () ->
-                    usuarioController.actualizarPassword(10, 5, req));
+                    usuarioController.actualizarPassword(genericReq, null, 5));
         }
 
         @Test
         @DisplayName("Usuario autenticado sí puede cambiar su propia contraseña")
         void usuarioPuedeCambiarSuPropiaPassword() {
-            ActualizarPasswordRequest req = new ActualizarPasswordRequest("PassActual1!", "PassNuevo1!");
+            ActualizarPasswordRequest req = ActualizarPasswordRequest.builder()
+                    .id(5)
+                    .passwordActual("PassActual1!")
+                    .passwordNuevo("PassNuevo1!")
+                    .build();
+            com.proyecto.servicios.model.GenericRequest<ActualizarPasswordRequest> genericReq = new com.proyecto.servicios.model.GenericRequest<>();
+            genericReq.setDatos(req);
+
             // Usuario con ID 5 cambia su propio password (ID 5)
-            usuarioController.actualizarPassword(5, 5, req);
-            verify(usuarioService).actualizarPassword(5, req);
+            usuarioController.actualizarPassword(genericReq, null, 5);
+            verify(usuarioService).actualizarPassword(genericReq);
         }
     }
 }

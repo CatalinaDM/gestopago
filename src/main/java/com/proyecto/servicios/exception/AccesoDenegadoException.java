@@ -4,6 +4,10 @@ import org.springframework.http.HttpStatus;
 
 public class AccesoDenegadoException extends ClienteException {
 
+    public AccesoDenegadoException() {
+        super(com.proyecto.servicios.enums.ErrorCode.ACCESO_DENEGADO);
+    }
+
     public AccesoDenegadoException(String mensaje) {
         super("AUTH-004", mensaje, HttpStatus.FORBIDDEN);
     }

@@ -2,23 +2,24 @@ package com.proyecto.servicios.controller;
 
 import com.proyecto.servicios.model.GenericRequest;
 import com.proyecto.servicios.model.GenericResponse;
+import com.proyecto.servicios.model.cliente.ClienteAccionRequest;
 import com.proyecto.servicios.model.cliente.ClienteActualizaRequest;
+import com.proyecto.servicios.model.cliente.ClienteConsultaRequest;
 import com.proyecto.servicios.model.cliente.ClienteRegistroRequest;
 import com.proyecto.servicios.model.cliente.ClienteResponse;
 import com.proyecto.servicios.service.ClienteService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
-import java.util.List;
-
 @RestController
 @RequestMapping("/clientes")
+@Tag(name = "Clientes", description = "Endpoints para registro, consulta unificada, actualización y gestión del ciclo de vida (baja/reactivación) de clientes.")
 public class ClienteController {
 
     private final ClienteService clienteService;
@@ -28,173 +29,97 @@ public class ClienteController {
     }
 
     @PostMapping
+    @Operation(
+            summary = "Registrar nuevo cliente",
+            description = "Crea un cliente nuevo en el sistema con su domicilio, cuenta bancaria inicial y usuario de acceso. Valida mayoría de edad (>=18 años) y unicidad de CURP, RFC y correo electrónico."
+    )
     public ResponseEntity<ClienteResponse> registrarCliente(
             @Valid @RequestBody GenericRequest<ClienteRegistroRequest> request) {
         ClienteResponse response = clienteService.registrarCliente(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @GetMapping
-    public ResponseEntity<List<ClienteResponse>> obtenerClientes(
-            @RequestAttribute(value = "rol", required = false) Integer rol,
-            @RequestParam(required = false) String filtro,
-            @RequestParam(required = false) String curp,
-            @RequestParam(required = false) String rfc,
-            @RequestParam(required = false) String email,
-            @RequestParam(required = false) String numeroCuenta) {
+    @PostMapping("/consulta")
+    @Operation(
+            summary = "Punto único de consulta flexible y paginada (Solo Admin)",
+            description = "Permite buscar clientes combinando cualquier criterio opcional en el cuerpo de la petición: por CURP, RFC, email, número de cuenta, texto libre ('filtro'), rango de fechas ('fechaInicio', 'fechaFin'), estado activo ('soloActivos': true/false) y paginación ('pagina' y 'tamano'). Si no se envían filtros, retorna el listado paginado por defecto."
+    )
+    public ResponseEntity<Page<ClienteResponse>> consultarClientes(
+            @Parameter(hidden = true) @RequestAttribute(value = "rol", required = false) Integer rol,
+            @Valid @RequestBody(required = false) GenericRequest<ClienteConsultaRequest> request) {
 
         validarAdmin(rol);
-
-        if (filtro != null && !filtro.isBlank()) {
-            return ResponseEntity.ok(clienteService.buscarClientes(filtro));
-        }
-
-        if ((curp != null && !curp.isBlank())
-                || (rfc != null && !rfc.isBlank())
-                || (email != null && !email.isBlank())
-                || (numeroCuenta != null && !numeroCuenta.isBlank())) {
-            return ResponseEntity.ok(clienteService.buscarPorCriterios(curp, rfc, email, numeroCuenta));
-        }
-
-        return ResponseEntity.ok(clienteService.obtenerTodos());
+        return ResponseEntity.ok(clienteService.consultar(request));
     }
 
-    @GetMapping("/paginados")
-    public ResponseEntity<Page<ClienteResponse>> obtenerClientesPaginados(
-            @RequestAttribute(value = "rol", required = false) Integer rol,
-            @RequestParam(required = false) String filtro,
-            @RequestParam(required = false, defaultValue = "false") boolean soloActivos,
-            Pageable pageable) {
-
-        validarAdmin(rol);
-
-        if (filtro != null && !filtro.isBlank()) {
-            return ResponseEntity.ok(clienteService.buscarClientesPaginados(filtro, pageable));
-        }
-        if (soloActivos) {
-            return ResponseEntity.ok(clienteService.obtenerActivosPaginados(pageable));
-        }
-        return ResponseEntity.ok(clienteService.obtenerPaginados(pageable));
-    }
-
-    @GetMapping("/activos")
-    public ResponseEntity<List<ClienteResponse>> obtenerClientesActivos(
-            @RequestAttribute(value = "rol", required = false) Integer rol) {
-        validarAdmin(rol);
-        return ResponseEntity.ok(clienteService.obtenerActivos());
-    }
-
-    @GetMapping("/me")
+    @PostMapping("/me")
+    @Operation(
+            summary = "Obtener perfil del cliente autenticado",
+            description = "Retorna el expediente completo del cliente correspondiente al usuario que ha iniciado sesión a través de su token JWT."
+    )
     public ResponseEntity<ClienteResponse> obtenerMiPerfil(
-            @RequestAttribute(value = "clienteId", required = false) Integer clienteId) {
-        if (clienteId == null) {
-            throw new com.proyecto.servicios.exception.AccesoDenegadoException("AUTH-005", "El usuario autenticado no tiene un cliente asociado");
-        }
+            @Parameter(hidden = true) @RequestAttribute(value = "clienteId", required = false) Integer clienteId) {
         return ResponseEntity.ok(clienteService.obtenerPerfil(clienteId));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ClienteResponse> obtenerPorId(
-            @PathVariable Integer id,
-            @RequestAttribute(value = "rol", required = false) Integer rol) {
-        validarAdmin(rol);
-        return ResponseEntity.ok(clienteService.obtenerPorId(id));
-    }
-
-    @GetMapping("/curp/{curp}")
-    public ResponseEntity<List<ClienteResponse>> obtenerPorCurp(
-            @PathVariable String curp,
-            @RequestAttribute(value = "rol", required = false) Integer rol) {
-        validarAdmin(rol);
-        return ResponseEntity.ok(clienteService.obtenerPorCurp(curp));
-    }
-
-    @GetMapping("/rfc/{rfc}")
-    public ResponseEntity<List<ClienteResponse>> obtenerPorRfc(
-            @PathVariable String rfc,
-            @RequestAttribute(value = "rol", required = false) Integer rol) {
-        validarAdmin(rol);
-        return ResponseEntity.ok(clienteService.obtenerPorRfc(rfc));
-    }
-
-    @GetMapping("/correo/{correo}")
-    public ResponseEntity<List<ClienteResponse>> obtenerPorCorreo(
-            @PathVariable String correo,
-            @RequestAttribute(value = "rol", required = false) Integer rol) {
-        validarAdmin(rol);
-        return ResponseEntity.ok(clienteService.obtenerPorCorreo(correo));
-    }
-
-    @GetMapping("/cuenta/{numeroCuenta}")
-    public ResponseEntity<ClienteResponse> obtenerPorNumeroCuenta(
-            @PathVariable String numeroCuenta,
-            @RequestAttribute(value = "rol", required = false) Integer rol) {
-        validarAdmin(rol);
-        return ResponseEntity.ok(clienteService.obtenerPorNumeroCuenta(numeroCuenta));
-    }
-
-    @GetMapping("/rango-fechas")
-    public ResponseEntity<List<ClienteResponse>> obtenerPorRangoFechas(
-            @RequestAttribute(value = "rol", required = false) Integer rol,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin) {
-        validarAdmin(rol);
-        return ResponseEntity.ok(clienteService.obtenerPorRangoFechas(fechaInicio, fechaFin));
-    }
-
-    @GetMapping("/buscar")
-    public ResponseEntity<List<ClienteResponse>> buscarClientes(
-            @RequestAttribute(value = "rol", required = false) Integer rol,
-            @RequestParam String filtro) {
-        validarAdmin(rol);
-        return ResponseEntity.ok(clienteService.buscarClientes(filtro));
-    }
-
     @PutMapping
+    @Operation(
+            summary = "Actualizar información del cliente",
+            description = "Permite modificar datos personales, de contacto, domicilio e información laboral. Por regla de negocio, los campos CURP, RFC y Número de Cuenta son inmutables. Solo el Administrador o el propio cliente pueden modificar su registro."
+    )
     public ResponseEntity<ClienteResponse> actualizarCliente(
-            @RequestAttribute(value = "rol", required = false) Integer rol,
-            @RequestAttribute(value = "clienteId", required = false) Integer tokenClienteId,
+            @Parameter(hidden = true) @RequestAttribute(value = "rol", required = false) Integer rol,
+            @Parameter(hidden = true) @RequestAttribute(value = "clienteId", required = false) Integer tokenClienteId,
             @Valid @RequestBody GenericRequest<ClienteActualizaRequest> request) {
 
         Integer idDelBody = request.getDatos() != null ? request.getDatos().getId() : null;
 
-        // Solo Admin o el propio cliente pueden modificar su registro
         if ((rol == null || rol != 1) && (tokenClienteId == null || !tokenClienteId.equals(idDelBody))) {
-            throw new com.proyecto.servicios.exception.AccesoDenegadoException(
-                    "AUTH-004", "Acceso denegado: No tiene permisos para modificar la información de otro cliente");
+            throw new com.proyecto.servicios.exception.AccesoDenegadoException();
         }
 
         return ResponseEntity.ok(clienteService.actualizarCliente(request));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<GenericResponse> darDeBajaCliente(
-            @PathVariable Integer id,
-            @RequestAttribute(value = "rol", required = false) Integer rol) {
+    @PostMapping("/estado")
+    @Operation(
+            summary = "Cambiar estado de cliente: Baja lógica o Reactivación (Solo Admin)",
+            description = "Endpoint unificado para modificar el ciclo de vida del cliente mediante una bandera o acción en el cuerpo de la petición ('accion': 'BAJA' o 'REACTIVAR'). La baja lógica desactiva en cascada las cuentas y el acceso del usuario sin eliminar físicamente datos. La reactivación restablece el estado activo."
+    )
+    public ResponseEntity<GenericResponse> cambiarEstadoCliente(
+            @Valid @RequestBody GenericRequest<ClienteAccionRequest> request,
+            @Parameter(hidden = true) @RequestAttribute(value = "rol", required = false) Integer rol) {
         validarAdmin(rol);
-        clienteService.darDeBajaCliente(id);
-        GenericResponse response = new GenericResponse();
-        response.setCodigo(0);
-        response.setMensaje("Cliente y servicios asociados dados de baja correctamente");
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(clienteService.cambiarEstadoCliente(request));
     }
 
-    @PatchMapping("/{id}/reactivar")
-    public ResponseEntity<GenericResponse> reactivarCliente(
-            @PathVariable Integer id,
-            @RequestAttribute(value = "rol", required = false) Integer rol) {
+    @PostMapping("/baja")
+    @Operation(
+            summary = "Dar de baja lógica a un cliente (Solo Admin)",
+            description = "Desactiva lógicamente al cliente, sus cuentas bancarias asociadas y su usuario de acceso. Nota: Puede utilizar también el endpoint unificado POST /clientes/estado."
+    )
+    public ResponseEntity<GenericResponse> darDeBajaCliente(
+            @Valid @RequestBody GenericRequest<ClienteAccionRequest> request,
+            @Parameter(hidden = true) @RequestAttribute(value = "rol", required = false) Integer rol) {
         validarAdmin(rol);
-        clienteService.reactivarCliente(id);
-        GenericResponse response = new GenericResponse();
-        response.setCodigo(0);
-        response.setMensaje("Cliente y servicios asociados reactivados correctamente");
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(clienteService.darDeBajaCliente(request));
+    }
+
+    @PostMapping("/reactivar")
+    @Operation(
+            summary = "Reactivar a un cliente dado de baja (Solo Admin)",
+            description = "Reactiva al cliente, sus cuentas asociadas y su usuario de acceso, restableciendo el contador de intentos fallidos. Nota: Puede utilizar también el endpoint unificado POST /clientes/estado."
+    )
+    public ResponseEntity<GenericResponse> reactivarCliente(
+            @Valid @RequestBody GenericRequest<ClienteAccionRequest> request,
+            @Parameter(hidden = true) @RequestAttribute(value = "rol", required = false) Integer rol) {
+        validarAdmin(rol);
+        return ResponseEntity.ok(clienteService.reactivarCliente(request));
     }
 
     private void validarAdmin(Integer rol) {
         if (rol == null || rol != 1) {
-            throw new com.proyecto.servicios.exception.AccesoDenegadoException(
-                    "AUTH-004", "Acceso denegado: Se requieren permisos de Administrador para esta operación");
+            throw new com.proyecto.servicios.exception.AccesoDenegadoException();
         }
     }
 }
