@@ -1,9 +1,11 @@
 package com.proyecto.servicios.model.cliente;
 
+import com.proyecto.servicios.model.GenericResponse;
 import com.proyecto.servicios.model.cuenta.CuentaResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
@@ -15,7 +17,8 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ClienteResponse {
+@EqualsAndHashCode(callSuper = false)
+public class ClienteResponse extends GenericResponse {
 
     private Integer id;
     private String nombre;

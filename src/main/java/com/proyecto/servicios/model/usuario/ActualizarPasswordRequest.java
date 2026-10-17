@@ -1,6 +1,7 @@
 package com.proyecto.servicios.model.usuario;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,6 +13,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ActualizarPasswordRequest {
+
+    @NotNull(message = "El id del usuario es obligatorio")
+    private Integer id;
 
     @NotBlank(message = "La contraseña actual es obligatoria")
     private String passwordActual;

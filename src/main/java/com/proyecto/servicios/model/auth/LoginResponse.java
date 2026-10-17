@@ -1,15 +1,18 @@
 package com.proyecto.servicios.model.auth;
 
+import com.proyecto.servicios.model.GenericResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class LoginResponse {
+@EqualsAndHashCode(callSuper = false)
+public class LoginResponse extends GenericResponse {
 
     private String token;
     @Builder.Default

@@ -141,7 +141,10 @@ class ClienteCicloVidaTest {
             return c;
         });
 
-        ClienteResponse response = clienteService.registrarCliente(crearRequest());
+        com.proyecto.servicios.model.GenericRequest<ClienteRegistroRequest> regRequest = new com.proyecto.servicios.model.GenericRequest<>();
+        regRequest.setDatos(crearRequest());
+
+        ClienteResponse response = clienteService.registrarCliente(regRequest);
         assertNotNull(response);
 
         // 2. Crear las entidades vinculadas en estado activo

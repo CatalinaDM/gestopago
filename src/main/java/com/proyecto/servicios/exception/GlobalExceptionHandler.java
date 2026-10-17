@@ -1,5 +1,6 @@
 package com.proyecto.servicios.exception;
 
+import com.proyecto.servicios.enums.ErrorCode;
 import com.proyecto.servicios.model.ApiErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -19,65 +20,82 @@ import java.util.stream.Collectors;
 @Slf4j
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(CatalogoException.class)
-    public ResponseEntity<ApiErrorResponse> manejarCatalogo(CatalogoException exception, HttpServletRequest request) {
-        return ResponseEntity.status(exception.getEstado())
-                .body(new ApiErrorResponse(exception.getCodigo(), exception.getMessage(), request.getRequestURI()));
+    /**
+     * Manejador centralizado y unificado para todas las excepciones de negocio.
+     * Utiliza el ErrorCode enum para determinar el código, mensaje y status HTTP.
+     */
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ApiErrorResponse> manejarBusinessException(BusinessException exception, HttpServletRequest request) {
+        ErrorCode errorCode = exception.getErrorCode() != null ? exception.getErrorCode() : ErrorCode.ERROR_INTERNO;
+        HttpStatus status = errorCode.getHttpStatus() != null ? errorCode.getHttpStatus() : HttpStatus.BAD_REQUEST;
+        String mensaje = exception.getMessage() != null ? exception.getMessage() : errorCode.getMessage();
+
+        log.warn("Negocio [{}]: {}", errorCode.name(), mensaje);
+        return ResponseEntity.status(status)
+                .body(new ApiErrorResponse(String.valueOf(errorCode.getCode()), mensaje, request.getRequestURI()));
     }
 
-    @ExceptionHandler(ClienteException.class)
-    public ResponseEntity<ApiErrorResponse> manejarClienteException(ClienteException exception, HttpServletRequest request) {
-        return ResponseEntity.status(exception.getEstado())
-                .body(new ApiErrorResponse(exception.getCodigo(), exception.getMessage(), request.getRequestURI()));
-    }
-
+    /**
+     * Errores de validación de Bean Validation (@Valid, @NotNull, @NotBlank, @Size, @Pattern)
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiErrorResponse> manejarValidaciones(MethodArgumentNotValidException exception, HttpServletRequest request) {
-        java.util.Map<String, String> erroresDetallados = new java.util.HashMap<>();
+        java.util.Map<String, String> erroresDetallados = new java.util.LinkedHashMap<>();
         for (FieldError error : exception.getBindingResult().getFieldErrors()) {
-            erroresDetallados.putIfAbsent(error.getField(), error.getDefaultMessage());
+            erroresDetallados.put(error.getField(), error.getDefaultMessage());
         }
 
         String mensajeResumen = exception.getBindingResult().getFieldErrors().stream()
-                .map(FieldError::getDefaultMessage)
+                .map(e -> e.getField() + ": " + e.getDefaultMessage())
                 .distinct()
                 .collect(Collectors.joining("; "));
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ApiErrorResponse("VALIDACION-001", mensajeResumen, erroresDetallados, request.getRequestURI()));
+                .body(new ApiErrorResponse(
+                        String.valueOf(ErrorCode.VALIDACION_ERROR.getCode()),
+                        mensajeResumen,
+                        erroresDetallados,
+                        request.getRequestURI()
+                ));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiErrorResponse> manejarJsonMalformado(HttpMessageNotReadableException exception, HttpServletRequest request) {
-        log.warn("HTTP-001: Petición con cuerpo JSON malformado o ilegible: {}", exception.getMessage());
+        log.warn("JSON malformado: {}", exception.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ApiErrorResponse("HTTP-001", "El cuerpo de la petición contiene un formato JSON inválido", request.getRequestURI()));
+                .body(new ApiErrorResponse(
+                        String.valueOf(ErrorCode.VALIDACION_ERROR.getCode()),
+                        "El cuerpo de la petición contiene un formato JSON inválido o ilegible",
+                        request.getRequestURI()
+                ));
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ApiErrorResponse> manejarMetodoNoSoportado(HttpRequestMethodNotSupportedException exception, HttpServletRequest request) {
-        log.warn("HTTP-002: Método HTTP no soportado: {}", exception.getMethod());
+        log.warn("Método HTTP no soportado: {}", exception.getMethod());
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
                 .body(new ApiErrorResponse("HTTP-002", "Método HTTP no permitido: " + exception.getMethod(), request.getRequestURI()));
     }
 
     @ExceptionHandler(DataAccessException.class)
     public ResponseEntity<ApiErrorResponse> manejarBaseDeDatos(DataAccessException exception, HttpServletRequest request) {
-        log.error("DB-001: Error de persistencia en base de datos: {}", exception.getMessage());
+        log.error("Error persistencia BD: {}", exception.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ApiErrorResponse("DB-001", "Ocurrió un error al procesar la operación en base de datos", request.getRequestURI()));
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ApiErrorResponse> manejarIllegalArgument(IllegalArgumentException exception, HttpServletRequest request) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ApiErrorResponse("ARGUMENTO-001", exception.getMessage(), request.getRequestURI()));
+                .body(new ApiErrorResponse(
+                        String.valueOf(ErrorCode.ERROR_BASE_DATOS.getCode()),
+                        ErrorCode.ERROR_BASE_DATOS.getMessage(),
+                        request.getRequestURI()
+                ));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> manejarInesperado(Exception exception, HttpServletRequest request) {
-        log.error("SYS-999: Error no controlado en la aplicación ({})", exception.getClass().getSimpleName(), exception);
+        log.error("Error no controlado ({})", exception.getClass().getSimpleName(), exception);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ApiErrorResponse("SYS-999", "Ha ocurrido un error inesperado en el servidor", request.getRequestURI()));
+                .body(new ApiErrorResponse(
+                        String.valueOf(ErrorCode.ERROR_INTERNO.getCode()),
+                        ErrorCode.ERROR_INTERNO.getMessage(),
+                        request.getRequestURI()
+                ));
     }
 }

@@ -1,6 +1,10 @@
 package com.proyecto.servicios.service;
 
+import com.proyecto.servicios.model.GenericRequest;
+import com.proyecto.servicios.model.GenericResponse;
+import com.proyecto.servicios.model.cliente.ClienteAccionRequest;
 import com.proyecto.servicios.model.cliente.ClienteActualizaRequest;
+import com.proyecto.servicios.model.cliente.ClienteConsultaRequest;
 import com.proyecto.servicios.model.cliente.ClienteRegistroRequest;
 import com.proyecto.servicios.model.cliente.ClienteResponse;
 
@@ -12,8 +16,23 @@ import java.util.List;
 
 public interface ClienteService {
 
-    ClienteResponse registrarCliente(ClienteRegistroRequest request);
+    ClienteResponse registrarCliente(GenericRequest<ClienteRegistroRequest> request);
 
+    // Consulta unificada por DTO con filtros combinables y paginación
+    Page<ClienteResponse> consultar(GenericRequest<ClienteConsultaRequest> request);
+
+    // Acciones por DTO
+    GenericResponse cambiarEstadoCliente(GenericRequest<ClienteAccionRequest> request);
+
+    GenericResponse darDeBajaCliente(GenericRequest<ClienteAccionRequest> request);
+
+    GenericResponse reactivarCliente(GenericRequest<ClienteAccionRequest> request);
+
+    ClienteResponse actualizarCliente(GenericRequest<ClienteActualizaRequest> request);
+
+    ClienteResponse obtenerPerfil(Integer clienteId);
+
+    // Métodos de conveniencia / compatibilidad para servicios internos y tests
     List<ClienteResponse> obtenerTodos();
 
     Page<ClienteResponse> obtenerPaginados(Pageable pageable);
@@ -25,8 +44,6 @@ public interface ClienteService {
     Page<ClienteResponse> buscarClientesPaginados(String filtro, Pageable pageable);
 
     ClienteResponse obtenerPorId(Integer id);
-
-    ClienteResponse obtenerPerfil(Integer clienteId);
 
     List<ClienteResponse> obtenerPorCurp(String curp);
 
@@ -41,8 +58,6 @@ public interface ClienteService {
     List<ClienteResponse> buscarClientes(String filtro);
 
     List<ClienteResponse> buscarPorCriterios(String curp, String rfc, String email, String numeroCuenta);
-
-    ClienteResponse actualizarCliente(Integer id, ClienteActualizaRequest request);
 
     void darDeBajaCliente(Integer id);
 

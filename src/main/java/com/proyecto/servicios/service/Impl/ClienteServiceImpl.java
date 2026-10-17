@@ -7,7 +7,11 @@ import com.proyecto.servicios.entity.usuario.Usuario;
 import com.proyecto.servicios.exception.*;
 import com.proyecto.servicios.mapper.ClienteMapper;
 import com.proyecto.servicios.mapper.DomicilioMapper;
+import com.proyecto.servicios.model.GenericRequest;
+import com.proyecto.servicios.model.GenericResponse;
+import com.proyecto.servicios.model.cliente.ClienteAccionRequest;
 import com.proyecto.servicios.model.cliente.ClienteActualizaRequest;
+import com.proyecto.servicios.model.cliente.ClienteConsultaRequest;
 import com.proyecto.servicios.model.cliente.ClienteRegistroRequest;
 import com.proyecto.servicios.model.cliente.ClienteResponse;
 import com.proyecto.servicios.repositorys.cliente.ClienteRepository;
@@ -15,9 +19,14 @@ import com.proyecto.servicios.repositorys.cliente.CuentaRepository;
 import com.proyecto.servicios.repositorys.cliente.DomicilioRepository;
 import com.proyecto.servicios.repositorys.usuario.UsuarioRepository;
 import com.proyecto.servicios.service.ClienteService;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -64,7 +73,8 @@ public class ClienteServiceImpl implements ClienteService {
 
     @Override
     @Transactional
-    public ClienteResponse registrarCliente(ClienteRegistroRequest request) {
+    public ClienteResponse registrarCliente(GenericRequest<ClienteRegistroRequest> genericRequest) {
+        ClienteRegistroRequest request = genericRequest.getDatos();
         log.info("Iniciando registro de nuevo cliente con CURP: {}, RFC: {}", request.getCurp(), request.getRfc());
 
         validarMayoriaDeEdad(request.getFechaNacimiento());
@@ -105,6 +115,114 @@ public class ClienteServiceImpl implements ClienteService {
                 cliente.getId(), cuenta.getNumeroCuenta(), usuario.getCorreo());
 
         return clienteMapper.toResponse(cliente);
+    }
+
+    @Override
+    public Page<ClienteResponse> consultar(GenericRequest<ClienteConsultaRequest> genericRequest) {
+        ClienteConsultaRequest criteria = genericRequest != null && genericRequest.getDatos() != null
+                ? genericRequest.getDatos()
+                : new ClienteConsultaRequest();
+
+        log.info("Ejecutando consulta unificada de clientes con criterios: {}", criteria);
+
+        Specification<Cliente> spec = (root, query, cb) -> {
+            query.distinct(true);
+            java.util.List<Predicate> predicates = new java.util.ArrayList<>();
+
+            if (criteria.getId() != null) {
+                predicates.add(cb.equal(root.get("id"), criteria.getId()));
+            }
+
+            if (criteria.getSoloActivos() != null) {
+                predicates.add(cb.equal(root.get("activo"), criteria.getSoloActivos()));
+            }
+
+            if (criteria.getCurp() != null && !criteria.getCurp().isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("curp")), "%" + criteria.getCurp().trim().toLowerCase() + "%"));
+            }
+
+            if (criteria.getRfc() != null && !criteria.getRfc().isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("rfc")), "%" + criteria.getRfc().trim().toLowerCase() + "%"));
+            }
+
+            if (criteria.getEmail() != null && !criteria.getEmail().isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("email")), "%" + criteria.getEmail().trim().toLowerCase() + "%"));
+            }
+
+            if (criteria.getNumeroCuenta() != null && !criteria.getNumeroCuenta().isBlank()) {
+                Join<Cliente, Cuenta> cuentasJoin = root.join("cuentas", JoinType.LEFT);
+                predicates.add(cb.like(cuentasJoin.get("numeroCuenta"), "%" + criteria.getNumeroCuenta().trim() + "%"));
+            }
+
+            if (criteria.getFechaInicio() != null && criteria.getFechaFin() != null) {
+                LocalDateTime inicio = criteria.getFechaInicio().atStartOfDay();
+                LocalDateTime fin = criteria.getFechaFin().atTime(LocalTime.MAX);
+                predicates.add(cb.between(root.get("fechaCreacion"), inicio, fin));
+            } else if (criteria.getFechaInicio() != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("fechaCreacion"), criteria.getFechaInicio().atStartOfDay()));
+            } else if (criteria.getFechaFin() != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("fechaCreacion"), criteria.getFechaFin().atTime(LocalTime.MAX)));
+            }
+
+            if (criteria.getFiltro() != null && !criteria.getFiltro().isBlank()) {
+                String f = "%" + criteria.getFiltro().trim().toLowerCase() + "%";
+                Join<Cliente, Cuenta> ctaJoin = root.join("cuentas", JoinType.LEFT);
+                Predicate pFiltro = cb.or(
+                        cb.like(cb.lower(root.get("curp")), f),
+                        cb.like(cb.lower(root.get("rfc")), f),
+                        cb.like(cb.lower(root.get("email")), f),
+                        cb.like(cb.lower(root.get("nombre")), f),
+                        cb.like(cb.lower(root.get("apellidoPaterno")), f),
+                        cb.like(cb.lower(root.get("apellidoMaterno")), f),
+                        cb.like(ctaJoin.get("numeroCuenta"), f)
+                );
+                predicates.add(pFiltro);
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        int page = criteria.getPagina() != null && criteria.getPagina() >= 0 ? criteria.getPagina() : 0;
+        int size = criteria.getTamano() != null && criteria.getTamano() > 0 ? criteria.getTamano() : 50;
+        Pageable pageable = PageRequest.of(page, size);
+
+        return clienteRepository.findAll(spec, pageable).map(clienteMapper::toResponse);
+    }
+
+    @Override
+    @Transactional
+    public GenericResponse cambiarEstadoCliente(GenericRequest<ClienteAccionRequest> request) {
+        if (request == null || request.getDatos() == null) {
+            throw new ValidacionException("VALIDACION-001", "Los datos de la petición son obligatorios");
+        }
+        ClienteAccionRequest datos = request.getDatos();
+        if (datos.getAccion() == null) {
+            throw new ValidacionException("VALIDACION-001", "La acción es obligatoria: BAJA o REACTIVAR");
+        }
+
+        if (datos.getAccion() == com.proyecto.servicios.enums.TipoAccionCliente.BAJA) {
+            darDeBajaCliente(datos.getId());
+            return GenericResponse.success("Cliente y servicios asociados dados de baja correctamente");
+        } else {
+            reactivarCliente(datos.getId());
+            return GenericResponse.success("Cliente y servicios asociados reactivados correctamente");
+        }
+    }
+
+    @Override
+    @Transactional
+    public GenericResponse darDeBajaCliente(GenericRequest<ClienteAccionRequest> request) {
+        Integer id = request != null && request.getDatos() != null ? request.getDatos().getId() : null;
+        darDeBajaCliente(id);
+        return GenericResponse.success("Cliente y servicios asociados dados de baja correctamente");
+    }
+
+    @Override
+    @Transactional
+    public GenericResponse reactivarCliente(GenericRequest<ClienteAccionRequest> request) {
+        Integer id = request != null && request.getDatos() != null ? request.getDatos().getId() : null;
+        reactivarCliente(id);
+        return GenericResponse.success("Cliente y servicios asociados reactivados correctamente");
     }
 
     @Override
@@ -223,7 +341,9 @@ public class ClienteServiceImpl implements ClienteService {
 
     @Override
     @Transactional
-    public ClienteResponse actualizarCliente(Integer id, ClienteActualizaRequest request) {
+    public ClienteResponse actualizarCliente(GenericRequest<ClienteActualizaRequest> genericRequest) {
+        ClienteActualizaRequest request = genericRequest.getDatos();
+        Integer id = request.getId();
         log.info("Actualizando información del cliente ID: {}", id);
 
         Cliente cliente = clienteRepository.findById(id)

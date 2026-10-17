@@ -1,8 +1,10 @@
 package com.proyecto.servicios.model.cuenta;
 
+import com.proyecto.servicios.model.GenericResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
@@ -12,7 +14,8 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CuentaResponse {
+@EqualsAndHashCode(callSuper = false)
+public class CuentaResponse extends GenericResponse {
 
     private Integer id;
     private Integer clienteId;

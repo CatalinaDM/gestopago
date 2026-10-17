@@ -1,9 +1,11 @@
 package com.proyecto.servicios.exception;
 
+import com.proyecto.servicios.enums.ErrorCode;
+
 import org.springframework.http.HttpStatus;
 
 public class CuentaNoEncontradaException extends ClienteException {
     public CuentaNoEncontradaException(String numeroCuenta) {
-        super("CUENTA-001", "No se encontró la cuenta bancaria con el número: " + numeroCuenta, HttpStatus.NOT_FOUND);
+        super(ErrorCode.CUENTA_NO_ENCONTRADA, "La cuenta bancaria solicitada no existe o no fue encontrada");
     }
 }
