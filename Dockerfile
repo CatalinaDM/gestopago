@@ -24,5 +24,5 @@ COPY --from=builder /app/build/libs/*.jar app.jar
 # Exponer puerto
 EXPOSE 8081
 
-# Comando de inicio
-ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]
+# Comando de inicio con limite de memoria adecuado para el tier gratuito de Render (512MB)
+ENTRYPOINT ["java", "-Xmx380m", "-Xms128m", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]
