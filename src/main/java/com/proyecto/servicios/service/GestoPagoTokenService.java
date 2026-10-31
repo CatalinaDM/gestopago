@@ -11,4 +11,8 @@ public interface GestoPagoTokenService {
     Optional<GestoPagoToken> obtenerTokenActivo(Integer idDistribuidor, String codigoDispositivo);
 
     Optional<String> obtenerTokenParaConsulta(Integer idDistribuidor, String codigoDispositivo);
+
+    String obtenerTokenValido();
+
+    String renovarYObtenerToken(String tokenRechazado);
 }

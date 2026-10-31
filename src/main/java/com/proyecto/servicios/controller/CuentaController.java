@@ -1,7 +1,9 @@
 package com.proyecto.servicios.controller;
 
+import com.proyecto.servicios.exception.ValidacionException;
 import com.proyecto.servicios.model.GenericRequest;
 import com.proyecto.servicios.model.cuenta.CuentaResponse;
+import com.proyecto.servicios.model.cuenta.DepositoCuentaRequest;
 import com.proyecto.servicios.model.cuenta.SaldoCuentaResponse;
 import com.proyecto.servicios.service.CuentaService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,7 +17,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/cuentas")
-@Tag(name = "Cuentas Bancarias", description = "Endpoints para consulta de cuentas, verificación de saldos y listado de cuentas activas.")
+@Tag(name = "Cuentas Bancarias", description = "Endpoints para consulta de cuentas, verificación de saldos, depósito de fondos y listado de cuentas activas.")
 public class CuentaController {
 
     private final CuentaService cuentaService;
@@ -61,6 +63,26 @@ public class CuentaController {
             @Parameter(hidden = true) @RequestAttribute(value = "clienteId", required = false) Integer clienteId) {
         String num = request != null && request.getDatos() != null ? request.getDatos().getNumeroCuenta() : null;
         return ResponseEntity.ok(cuentaService.obtenerSaldo(num, rol, clienteId));
+    }
+
+    @PostMapping("/depositar")
+    @Operation(
+            summary = "Depositar saldo en una cuenta bancaria",
+            description = "Acredita el monto indicado al saldo disponible de una cuenta activa. Puede ejecutarlo el titular de la cuenta o un Administrador."
+    )
+    public ResponseEntity<SaldoCuentaResponse> depositar(
+            @Valid @RequestBody GenericRequest<DepositoCuentaRequest> request,
+            @Parameter(hidden = true) @RequestAttribute(value = "rol", required = false) Integer rol,
+            @Parameter(hidden = true) @RequestAttribute(value = "clienteId", required = false) Integer clienteId) {
+        if (request == null || request.getDatos() == null) {
+            throw new ValidacionException("VALIDACION-001", "Los datos del depósito son obligatorios");
+        }
+        return ResponseEntity.ok(cuentaService.depositar(
+                request.getDatos().getNumeroCuenta(),
+                request.getDatos().getMonto(),
+                rol,
+                clienteId
+        ));
     }
 
     @PostMapping("/activas")

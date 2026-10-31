@@ -21,6 +21,40 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     /**
+     * Manejador para ClienteException y subclases que definen código o estado HTTP personalizado.
+     */
+    @ExceptionHandler(ClienteException.class)
+    public ResponseEntity<ApiErrorResponse> manejarClienteException(ClienteException exception, HttpServletRequest request) {
+        HttpStatus status = exception.getEstado() != null
+                ? exception.getEstado()
+                : (exception.getErrorCode() != null ? exception.getErrorCode().getHttpStatus() : HttpStatus.BAD_REQUEST);
+        String codigo = exception.getCodigo() != null
+                ? exception.getCodigo()
+                : String.valueOf(exception.getErrorCode() != null ? exception.getErrorCode().getCode() : ErrorCode.ERROR_INTERNO.getCode());
+        String mensaje = exception.getMessage() != null
+                ? exception.getMessage()
+                : ErrorCode.VALIDACION_ERROR.getMessage();
+
+        log.warn("Negocio [{}]: {}", codigo, mensaje);
+        return ResponseEntity.status(status)
+                .body(new ApiErrorResponse(codigo, mensaje, request.getRequestURI()));
+    }
+
+    /**
+     * Manejador para excepciones de Catálogo.
+     */
+    @ExceptionHandler(CatalogoException.class)
+    public ResponseEntity<ApiErrorResponse> manejarCatalogoException(CatalogoException exception, HttpServletRequest request) {
+        HttpStatus status = exception.getEstado() != null ? exception.getEstado() : HttpStatus.BAD_GATEWAY;
+        String codigo = exception.getCodigo() != null ? exception.getCodigo() : String.valueOf(ErrorCode.ERROR_INTERNO.getCode());
+        String mensaje = exception.getMessage() != null ? exception.getMessage() : ErrorCode.ERROR_INTERNO.getMessage();
+
+        log.warn("Catálogo [{}]: {}", codigo, mensaje);
+        return ResponseEntity.status(status)
+                .body(new ApiErrorResponse(codigo, mensaje, request.getRequestURI()));
+    }
+
+    /**
      * Manejador centralizado y unificado para todas las excepciones de negocio.
      * Utiliza el ErrorCode enum para determinar el código, mensaje y status HTTP.
      */
@@ -61,7 +95,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiErrorResponse> manejarJsonMalformado(HttpMessageNotReadableException exception, HttpServletRequest request) {
-        log.warn("JSON malformado: {}", exception.getMessage());
+        log.warn("JSON malformado en petición a {}", request.getRequestURI());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ApiErrorResponse(
                         String.valueOf(ErrorCode.VALIDACION_ERROR.getCode()),
@@ -79,7 +113,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataAccessException.class)
     public ResponseEntity<ApiErrorResponse> manejarBaseDeDatos(DataAccessException exception, HttpServletRequest request) {
-        log.error("Error persistencia BD: {}", exception.getMessage());
+        log.error("Error persistencia BD ({})", exception.getClass().getSimpleName());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiErrorResponse(
                         String.valueOf(ErrorCode.ERROR_BASE_DATOS.getCode()),
@@ -90,7 +124,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> manejarInesperado(Exception exception, HttpServletRequest request) {
-        log.error("Error no controlado ({})", exception.getClass().getSimpleName(), exception);
+        log.error("Error no controlado ({})", exception.getClass().getSimpleName());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiErrorResponse(
                         String.valueOf(ErrorCode.ERROR_INTERNO.getCode()),

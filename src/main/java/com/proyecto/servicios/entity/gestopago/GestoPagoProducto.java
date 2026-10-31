@@ -1,5 +1,6 @@
 package com.proyecto.servicios.entity.gestopago;
 
+import com.proyecto.servicios.enums.ModoCaptura;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -46,4 +47,8 @@ public class GestoPagoProducto {
 
     @Column(name = "legend", columnDefinition = "TEXT")
     private String legend;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "modo_captura", nullable = false, length = 30)
+    private ModoCaptura modoCaptura = ModoCaptura.NO_SOPORTADO;
 }

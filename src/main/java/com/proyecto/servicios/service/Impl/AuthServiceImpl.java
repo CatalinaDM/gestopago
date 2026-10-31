@@ -9,7 +9,9 @@ import com.proyecto.servicios.model.auth.LoginResponse;
 import com.proyecto.servicios.repositorys.usuario.UsuarioRepository;
 import com.proyecto.servicios.security.JwtUtil;
 import com.proyecto.servicios.service.AuthService;
+import com.proyecto.servicios.service.AutorizacionTransaccionService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -20,14 +22,25 @@ public class AuthServiceImpl implements AuthService {
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final AutorizacionTransaccionService autorizacionTransaccionService;
 
     public AuthServiceImpl(
             UsuarioRepository usuarioRepository,
             PasswordEncoder passwordEncoder,
             JwtUtil jwtUtil) {
+        this(usuarioRepository, passwordEncoder, jwtUtil, null);
+    }
+
+    @Autowired
+    public AuthServiceImpl(
+            UsuarioRepository usuarioRepository,
+            PasswordEncoder passwordEncoder,
+            JwtUtil jwtUtil,
+            AutorizacionTransaccionService autorizacionTransaccionService) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
+        this.autorizacionTransaccionService = autorizacionTransaccionService;
     }
 
     @Override
@@ -66,6 +79,11 @@ public class AuthServiceImpl implements AuthService {
         if (usuario.getIntentosFallidos() != null && usuario.getIntentosFallidos() > 0) {
             usuario.setIntentosFallidos(0);
             usuarioRepository.save(usuario);
+        }
+
+        // Generar NIP transaccional automáticamente si el usuario aún no tiene uno registrado
+        if (autorizacionTransaccionService != null) {
+            autorizacionTransaccionService.asegurarNipAlIniciarSesion(usuario, request.getPassword());
         }
 
         Integer clienteId = usuario.getCliente() != null ? usuario.getCliente().getId() : null;

@@ -2,36 +2,37 @@ package com.proyecto.servicios.service.Impl;
 
 import com.proyecto.servicios.client.GestoPagoProductClient;
 import com.proyecto.servicios.entity.gestopago.GestoPagoProducto;
+import com.proyecto.servicios.enums.ModoCaptura;
 import com.proyecto.servicios.exception.CatalogoException;
 import com.proyecto.servicios.mapper.GestoPagoProductoMapper;
-import com.proyecto.servicios.repositorys.gestopago.GestoPagoProductoRepository;
-import com.proyecto.servicios.service.CatalogoService;
-import com.proyecto.servicios.service.CatalogoCacheService;
-import com.proyecto.servicios.service.GestoPagoTokenService;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
-
 import com.proyecto.servicios.model.gestopago.GestoPagoProductResponse;
+import com.proyecto.servicios.repositorys.gestopago.GestoPagoProductoRepository;
+import com.proyecto.servicios.service.CatalogoCacheService;
+import com.proyecto.servicios.service.CatalogoClasificadorComponent;
+import com.proyecto.servicios.service.CatalogoService;
+import com.proyecto.servicios.service.GestoPagoTokenService;
 import feign.FeignException;
 import feign.RetryableException;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Unmarshaller;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
-import java.util.Objects;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
 
 import java.io.StringReader;
-
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.stream.Collectors;
-import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -39,9 +40,10 @@ public class CatalogoServiceImpl implements CatalogoService {
 
     private final GestoPagoTokenService gestoPagoTokenService;
     private final GestoPagoProductClient gestoPagoProductClient;
-        private final GestoPagoProductoRepository productoRepository;
-        private final CatalogoCacheService catalogoCacheService;
-        private final GestoPagoProductoMapper productoMapper;
+    private final GestoPagoProductoRepository productoRepository;
+    private final CatalogoCacheService catalogoCacheService;
+    private final GestoPagoProductoMapper productoMapper;
+    private final CatalogoClasificadorComponent clasificadorComponent;
 
     @Value("${gestopago.auth.id-distribuidor}")
     private Integer idDistribuidor;
@@ -55,12 +57,24 @@ public class CatalogoServiceImpl implements CatalogoService {
             GestoPagoProductoRepository productoRepository,
             CatalogoCacheService catalogoCacheService,
             GestoPagoProductoMapper productoMapper) {
+        this(gestoPagoTokenService, gestoPagoProductClient, productoRepository,
+                catalogoCacheService, productoMapper, new CatalogoClasificadorComponent());
+    }
 
+    @Autowired
+    public CatalogoServiceImpl(
+            GestoPagoTokenService gestoPagoTokenService,
+            GestoPagoProductClient gestoPagoProductClient,
+            GestoPagoProductoRepository productoRepository,
+            CatalogoCacheService catalogoCacheService,
+            GestoPagoProductoMapper productoMapper,
+            CatalogoClasificadorComponent clasificadorComponent) {
         this.gestoPagoTokenService = gestoPagoTokenService;
         this.gestoPagoProductClient = gestoPagoProductClient;
         this.productoRepository = productoRepository;
         this.catalogoCacheService = catalogoCacheService;
         this.productoMapper = productoMapper;
+        this.clasificadorComponent = clasificadorComponent;
     }
 
     @Override
@@ -120,12 +134,16 @@ public class CatalogoServiceImpl implements CatalogoService {
             }
 
             List<GestoPagoProducto> productos = response.getProductos().stream()
-                    .map(productoMapper::toEntity)
+                    .map(dto -> {
+                        GestoPagoProducto entity = productoMapper.toEntity(dto);
+                        entity.setModoCaptura(clasificadorComponent.clasificar(dto));
+                        return entity;
+                    })
                     .toList();
             log.info("Catálogo obtenido directamente desde GestoPago. Productos: {}", productos.size());
             return Optional.of(productos);
-            } catch (CatalogoException e) {
-                throw e;
+        } catch (CatalogoException e) {
+            throw e;
         } catch (RetryableException e) {
             log.error("CATALOGO-001: timeout o error de conexión con GestoPago");
             throw new CatalogoException(
@@ -160,7 +178,6 @@ public class CatalogoServiceImpl implements CatalogoService {
     }
 
     private void ejecutarActualizacion() {
-
         var tokenOptional = gestoPagoTokenService.obtenerTokenActivo(
                 idDistribuidor,
                 codigoDispositivo
@@ -231,8 +248,8 @@ public class CatalogoServiceImpl implements CatalogoService {
         }
 
         List<GestoPagoProducto> productosObsoletos = productosActuales.stream()
-            .filter(producto -> !clavesRecibidas.contains(claveProducto(producto)))
-            .toList();
+                .filter(producto -> !clavesRecibidas.contains(claveProducto(producto)))
+                .toList();
 
         if (!productosObsoletos.isEmpty()) {
             productoRepository.deleteAllInBatch(productosObsoletos);
@@ -254,8 +271,8 @@ public class CatalogoServiceImpl implements CatalogoService {
         }
 
         if (!"01".equals(response.getMensaje().getCodigo())) {
-                log.error("CATALOGO-008: GestoPago respondió con código {}",
-                        response.getMensaje().getCodigo());
+            log.error("CATALOGO-008: GestoPago respondió con código {}",
+                    response.getMensaje().getCodigo());
             return false;
         }
 
@@ -277,25 +294,29 @@ public class CatalogoServiceImpl implements CatalogoService {
 
         String clave = productoDto.getIdServicio() + "-" + productoDto.getIdProducto();
         GestoPagoProducto productoEntity = productosActualesMap.get(clave);
+        ModoCaptura modoCalculado = clasificadorComponent.clasificar(productoDto);
 
         if (productoEntity == null) {
             productoEntity = productoMapper.toEntity(productoDto);
+            productoEntity.setModoCaptura(modoCalculado);
             productosActualesMap.put(clave, productoEntity);
             catalogoParaCache.add(productoEntity);
             productosParaGuardar.add(productoEntity);
             return;
         }
 
-        if (productoCambio(productoEntity, productoDto)) {
+        if (productoCambio(productoEntity, productoDto, modoCalculado)) {
             productoMapper.updateEntity(productoDto, productoEntity);
+            productoEntity.setModoCaptura(modoCalculado);
             productosParaGuardar.add(productoEntity);
         }
     }
 
     private boolean productoCambio(
             GestoPagoProducto productoEntity,
-            com.proyecto.servicios.model.gestopago.GestoPagoProducto productoDto) {
-        return !Objects.equals(productoEntity.getIdCatTipoServicio(), productoDto.getIdCatTipoServicio())
+            com.proyecto.servicios.model.gestopago.GestoPagoProducto productoDto,
+            ModoCaptura modoCalculado) {
+        boolean cambioDatos = !Objects.equals(productoEntity.getIdCatTipoServicio(), productoDto.getIdCatTipoServicio())
                 || !Objects.equals(productoEntity.getProducto(), productoDto.getProducto())
                 || !Objects.equals(productoEntity.getServicio(), productoDto.getServicio())
                 || !Objects.equals(productoEntity.getTipoFront(), productoDto.getTipoFront())
@@ -304,6 +325,12 @@ public class CatalogoServiceImpl implements CatalogoService {
                 || !Objects.equals(productoEntity.getPrecio(), productoDto.getPrecio())
                 || !Objects.equals(productoEntity.getShowAyuda(), productoDto.getShowAyuda())
                 || !Objects.equals(productoEntity.getLegend(), productoDto.getLegend());
+
+        boolean cambioModo = productoEntity.getModoCaptura() != null
+                && productoEntity.getModoCaptura() != ModoCaptura.NO_SOPORTADO
+                && !Objects.equals(productoEntity.getModoCaptura(), modoCalculado);
+
+        return cambioDatos || cambioModo;
     }
 
     private String claveProducto(GestoPagoProducto producto) {
@@ -311,14 +338,8 @@ public class CatalogoServiceImpl implements CatalogoService {
     }
 
     private GestoPagoProductResponse convertirXml(String xml) throws JAXBException {
-
-        JAXBContext context =
-                JAXBContext.newInstance(GestoPagoProductResponse.class);
-
+        JAXBContext context = JAXBContext.newInstance(GestoPagoProductResponse.class);
         Unmarshaller unmarshaller = context.createUnmarshaller();
-
-        return (GestoPagoProductResponse) unmarshaller.unmarshal(
-                new StringReader(xml)
-        );
+        return (GestoPagoProductResponse) unmarshaller.unmarshal(new StringReader(xml));
     }
 }

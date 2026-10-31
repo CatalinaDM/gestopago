@@ -3,7 +3,6 @@ package com.proyecto.servicios.config;
 import com.proyecto.servicios.security.JwtInterceptor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -29,7 +28,8 @@ public class SecurityConfig implements WebMvcConfigurer {
                 .addPathPatterns(
                         "/clientes/**",
                         "/cuentas/**",
-                        "/usuarios/**"
+                        "/usuarios/**",
+                        "/pagos/**"
                 )
                 .excludePathPatterns(
                         "/auth/**",

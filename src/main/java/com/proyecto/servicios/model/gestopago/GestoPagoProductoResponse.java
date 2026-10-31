@@ -1,5 +1,6 @@
 package com.proyecto.servicios.model.gestopago;
 
+import com.proyecto.servicios.enums.ModoCaptura;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,4 +24,5 @@ public class GestoPagoProductoResponse {
     private String precio;
     private Boolean showAyuda;
     private String legend;
+    private ModoCaptura modoCaptura;
 }

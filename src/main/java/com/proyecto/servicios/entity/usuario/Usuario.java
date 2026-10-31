@@ -26,6 +26,7 @@ public class Usuario {
     @Column(name = "correo", nullable = false, unique = true, length = 100)
     private String correo;
 
+    @JsonIgnore
     @Column(name = "password", nullable = false, length = 255)
     private String password;
 
@@ -34,6 +35,19 @@ public class Usuario {
 
     @Column(name = "intentos_fallidos", nullable = false)
     private Integer intentosFallidos = 0;
+
+    @JsonIgnore
+    @Column(name = "nip_hash", length = 255)
+    private String nipHash;
+
+    @Column(name = "intentos_fallidos_nip", nullable = false)
+    private Integer intentosFallidosNip = 0;
+
+    @Column(name = "nip_bloqueado_hasta")
+    private LocalDateTime nipBloqueadoHasta;
+
+    @Column(name = "fecha_actualizacion_nip")
+    private LocalDateTime fechaActualizacionNip;
 
     @Column(name = "activo", nullable = false)
     private Boolean activo = true;
@@ -53,6 +67,9 @@ public class Usuario {
         }
         if (this.intentosFallidos == null) {
             this.intentosFallidos = 0;
+        }
+        if (this.intentosFallidosNip == null) {
+            this.intentosFallidosNip = 0;
         }
         if (this.activo == null) {
             this.activo = true;
