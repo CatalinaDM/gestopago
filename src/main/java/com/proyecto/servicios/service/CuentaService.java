@@ -3,6 +3,7 @@ package com.proyecto.servicios.service;
 import com.proyecto.servicios.model.cuenta.CuentaResponse;
 import com.proyecto.servicios.model.cuenta.SaldoCuentaResponse;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface CuentaService {
@@ -14,6 +15,8 @@ public interface CuentaService {
     SaldoCuentaResponse obtenerSaldo(String numeroCuenta);
 
     SaldoCuentaResponse obtenerSaldo(String numeroCuenta, Integer rol, Integer tokenClienteId);
+
+    SaldoCuentaResponse depositar(String numeroCuenta, BigDecimal monto, Integer rol, Integer tokenClienteId);
 
     List<CuentaResponse> obtenerCuentasActivas();
 

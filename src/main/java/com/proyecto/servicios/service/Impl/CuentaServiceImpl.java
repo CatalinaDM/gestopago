@@ -1,7 +1,9 @@
 package com.proyecto.servicios.service.Impl;
 
 import com.proyecto.servicios.entity.cliente.Cuenta;
+import com.proyecto.servicios.exception.CuentaInactivaException;
 import com.proyecto.servicios.exception.CuentaNoEncontradaException;
+import com.proyecto.servicios.exception.ValidacionException;
 import com.proyecto.servicios.mapper.CuentaMapper;
 import com.proyecto.servicios.model.cuenta.CuentaResponse;
 import com.proyecto.servicios.model.cuenta.SaldoCuentaResponse;
@@ -9,7 +11,10 @@ import com.proyecto.servicios.repositorys.cliente.CuentaRepository;
 import com.proyecto.servicios.service.CuentaService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 @Service
@@ -54,6 +59,38 @@ public class CuentaServiceImpl implements CuentaService {
         Cuenta cuenta = buscarCuentaPorNumero(numeroCuenta);
         validarPropiedadCuenta(cuenta, rol, tokenClienteId);
         return cuentaMapper.toSaldoResponse(cuenta);
+    }
+
+    @Override
+    @Transactional
+    public SaldoCuentaResponse depositar(String numeroCuenta, BigDecimal monto, Integer rol, Integer tokenClienteId) {
+        if (numeroCuenta == null || numeroCuenta.isBlank()) {
+            throw new ValidacionException("VALIDACION-001", "El número de cuenta es obligatorio");
+        }
+        if (monto == null || monto.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ValidacionException("VALIDACION-001", "El monto a depositar debe ser mayor a cero");
+        }
+
+        log.info("Realizando depósito en cuenta: {} (Rol: {}, ClienteId: {})", numeroCuenta, rol, tokenClienteId);
+        Cuenta cuenta = cuentaRepository.findByNumeroCuentaForUpdate(numeroCuenta.trim())
+                .orElseThrow(() -> new CuentaNoEncontradaException(numeroCuenta));
+
+        validarPropiedadCuenta(cuenta, rol, tokenClienteId);
+
+        if (Boolean.FALSE.equals(cuenta.getActivo())) {
+            throw new CuentaInactivaException(numeroCuenta);
+        }
+
+        BigDecimal saldoActual = cuenta.getSaldo() != null ? cuenta.getSaldo() : BigDecimal.ZERO;
+        BigDecimal nuevoSaldo = saldoActual.add(monto).setScale(2, RoundingMode.HALF_UP);
+        cuenta.setSaldo(nuevoSaldo);
+        cuentaRepository.save(cuenta);
+
+        log.info("Depósito aplicado exitosamente en cuenta: {}. Nuevo saldo: {}", numeroCuenta, nuevoSaldo);
+        SaldoCuentaResponse response = cuentaMapper.toSaldoResponse(cuenta);
+        response.setCodigo(0);
+        response.setMensaje("Depósito aplicado exitosamente");
+        return response;
     }
 
     @Override
